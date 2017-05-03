@@ -10,7 +10,8 @@
 #include <array>
 #include <tuple>
 #include <vector>
-#include <stack>  
+#include <stack> 
+#include <iomanip> 
 using namespace std;
 
 template<int N>
@@ -72,10 +73,11 @@ public:
 
   void reset_board() {
     memset(grid, 0, sizeof(grid[0][0]) * N * N);
+    current_move = 1;
   }
 
   bool is_valid_position(int x, int y) {
-    return ((x >= 0) && (x < N)) && ((y >= 0) && (y < N));
+    return ((x >= 0) && (x < N)) && ((y >= 0) && (y < N)) && (grid[x][y] == 0);
   }
 
   bool is_valid_move(int x, int y, int knight_move) {
@@ -103,7 +105,7 @@ public:
     return make_pair(x, y);
   }
 
-  void solve(string start_position, string goal_position) {
+  bool solve(string start_position, string goal_position) {
     reset_board();
     auto [x, y] = convertPosition(start_position);
     auto [xf, yf] = convertPosition(goal_position);
@@ -114,21 +116,35 @@ public:
     stack.push(make_pair(x, y));
 
     while(!stack.empty()) {
-      tie(x, y) = stack.pop();
+      tie(x, y) = stack.top();
+      grid[x][y] = current_move;
+      print_board();
 
+      stack.pop();
 
       if (x == xf && y == yf) {
-
+        return true;
       }
 
+      int explore_moves [8] = {0, 1, 2, 3, 4, 5, 6, 7};
+      random_shuffle(begin(explore_moves), end(explore_moves));
+
+      bool dead_end = true;
       for (int i = 0; i < 8; i++) {
-        if (is_valid_move(x, y, i)) {
-          stack.push(make_move(x, y, i));
+        if (is_valid_move(x, y, explore_moves[i])) {
+          stack.push(make_move(x, y, explore_moves[i]));
+          dead_end = false;
         }
       }
 
-
+      if (dead_end) {
+        grid[x][y] = 0;
+      } else {
+        current_move++;
+      }
     }
+
+    return false;
   }
 
   void print_board() {
@@ -136,9 +152,9 @@ public:
     for (int y = N - 1; y >= 0; y--) {
       for (int x = 0; x < N; x++) {
         if (grid[x][y] == current_move) {
-          cout << CURRENT_POSITION << " ";
+          cout << setw(4) << CURRENT_POSITION << " ";
         } else {
-          cout << grid[x][y] << " ";
+          cout << setw(4) << grid[x][y] << " ";
         }
       }
       cout << endl;
@@ -146,13 +162,11 @@ public:
   }
 
   friend ostream& operator<<(ostream &out, const Board<N> &b) {
-    for (int y = 0; y < N; y++)
-    {
-        for (int x = 0; x < N; x++)
-        {
-            cout << b.grid[x][y];
-        }
-        out << endl;
+    for (int y = N - 1; y >= 0; y--) {
+      for (int x = 0; x < N; x++) {
+        cout << setw(4) << b.grid[x][y] << " ";
+      }
+      out << endl;
     }
     return out;
   }
@@ -163,4 +177,7 @@ int main() {
 
   int move_sequence[] = {1, 6, 3, 0};
   cout << boolalpha << board.are_valid_moves(move_sequence, sizeof(move_sequence) / sizeof(int), "c4", true) << endl;
+
+  cout << board.solve("b6", "f4") << endl;
+  cout << board;
 }
