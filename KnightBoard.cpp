@@ -14,170 +14,36 @@
 #include <iomanip> 
 using namespace std;
 
-template<int N>
-class Board {
-public:
-  int grid [N][N] = {0};
-  int current_move = 0;
-  pair<int,int> knight_moves [8];
-  const string CURRENT_POSITION = "k";
+struct Position {
+  int row, col;
 
-  Board() {
-    knight_moves[0] = make_pair(2, 1);
-    knight_moves[1] = make_pair(2, -1);
-    knight_moves[2] = make_pair(1, -2);
-    knight_moves[3] = make_pair(-1, -2);
-    knight_moves[4] = make_pair(-2, -1);
-    knight_moves[5] = make_pair(-2, 1);
-    knight_moves[6] = make_pair(-1, 2);
-    knight_moves[7] = make_pair(1, 2);
-  }
-
-  pair<int, int> convertPosition(string position) {
-    return make_pair(position[0] - 'a', position[1] - '0' - 1);
-  }
-
-  bool are_valid_moves(int moves[], int move_length, string start_position, bool show_state) {
-    reset_board();
-    auto [x, y] = convertPosition(start_position);
-
-    if (!is_valid_position(x, y)) {
-      return false;
-    }
-
-    current_move = 1;
-    grid[x][y] = current_move;
-
-    if (show_state) {
-      print_board();
-    }
-
-    for (int i = 0; i < move_length; i++) {
-      if (!is_valid_move(x, y, moves[i])) {
-        return false;
-      } else {
-        tie(x, y) = make_move(x, y, moves[i]);
-
-        current_move++;
-
-        grid[x][y] = current_move;
-
-        if (show_state) {
-          print_board();
-        }
-      }
-    }
-
-    return true;
-  }
-
-  void reset_board() {
-    memset(grid, 0, sizeof(grid[0][0]) * N * N);
-    current_move = 1;
-  }
-
-  bool is_valid_position(int x, int y) {
-    return ((x >= 0) && (x < N)) && ((y >= 0) && (y < N)) && (grid[x][y] == 0);
-  }
-
-  bool is_valid_move(int x, int y, int knight_move) {
-    // Ensure move is a valid knight move
-    if (knight_move > 7 || knight_move < 0) {
-      return false;
-    }
-
-    int dx = get<0>(knight_moves[knight_move]);
-    int dy = get<1>(knight_moves[knight_move]);
-
-    x += dx;
-    y += dy;
-
-    return is_valid_position(x, y);
-  }
-
-  pair<int, int> make_move(int x, int y, int knight_move) {
-    int dx = get<0>(knight_moves[knight_move]);
-    int dy = get<1>(knight_moves[knight_move]);
-
-    x += dx;
-    y += dy;
-
-    return make_pair(x, y);
-  }
-
-  bool solve(string start_position, string goal_position) {
-    reset_board();
-    auto [x, y] = convertPosition(start_position);
-    auto [xf, yf] = convertPosition(goal_position);
-
-    vector<int> moves;
-    stack<pair<int, int>> stack;
-
-    stack.push(make_pair(x, y));
-
-    while(!stack.empty()) {
-      tie(x, y) = stack.top();
-      grid[x][y] = current_move;
-      print_board();
-
-      stack.pop();
-
-      if (x == xf && y == yf) {
-        return true;
-      }
-
-      int explore_moves [8] = {0, 1, 2, 3, 4, 5, 6, 7};
-      random_shuffle(begin(explore_moves), end(explore_moves));
-
-      bool dead_end = true;
-      for (int i = 0; i < 8; i++) {
-        if (is_valid_move(x, y, explore_moves[i])) {
-          stack.push(make_move(x, y, explore_moves[i]));
-          dead_end = false;
-        }
-      }
-
-      if (dead_end) {
-        grid[x][y] = 0;
-      } else {
-        current_move++;
-      }
-    }
-
-    return false;
-  }
-
-  void print_board() {
-    cout << "MOVE " << current_move << ":" << endl;
-    for (int y = N - 1; y >= 0; y--) {
-      for (int x = 0; x < N; x++) {
-        if (grid[x][y] == current_move) {
-          cout << setw(4) << CURRENT_POSITION << " ";
-        } else {
-          cout << setw(4) << grid[x][y] << " ";
-        }
-      }
-      cout << endl;
-    }
-  }
-
-  friend ostream& operator<<(ostream &out, const Board<N> &b) {
-    for (int y = N - 1; y >= 0; y--) {
-      for (int x = 0; x < N; x++) {
-        cout << setw(4) << b.grid[x][y] << " ";
-      }
-      out << endl;
-    }
-    return out;
+  Position(int row, int col) {
+    this->row = row;
+    this->col = col;
   }
 };
 
+Position positionFromId(int id, int boardLength) {
+  int row = id / boardLength;
+  int col = id % boardLength;
+
+  return Position(row, col);
+}
+
+int idFromPosition(Position position, int boardLength) {
+  return position.row * boardLength + position.col;
+}
+
 int main() {
-  Board<8> board;
+  // Testing positionFromId
+  Position position = positionFromId(4, 3);
+  if (position.row == 1 && position.col == 1) {
+    cout << "positionFromId() Test Success." << endl;
+  }
 
-  int move_sequence[] = {1, 6, 3, 0};
-  cout << boolalpha << board.are_valid_moves(move_sequence, sizeof(move_sequence) / sizeof(int), "c4", true) << endl;
-
-  cout << board.solve("b6", "f4") << endl;
-  cout << board;
+  // Testing idFromPosition
+  int id = idFromPosition(Position(1, 1), 3);
+  if (id == 4) {
+    cout << "idFromPosition() Test Success." << endl;
+  }
 }
