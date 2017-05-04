@@ -35,30 +35,57 @@ int idFromPosition(Position position, int boardLength) {
 }
 
 bool isValidPosition(Position position, int boardLength) {
-  return (position.row > 0) && (position.row < boardLength) && (position.col > 0) && (position.col < boardLength);
+  return (position.row >= 0) && (position.row < boardLength) && (position.col >= 0) && (position.col < boardLength);
+}
+
+bool isValidKnightMove(Position startPosition, Position endPosition, int boardLength) {
+  if (!isValidPosition(startPosition, boardLength) || !isValidPosition(endPosition, boardLength)) {
+    return false;
+  }
+
+  int deltaRow = endPosition.row - startPosition.row;
+  int deltaCol = endPosition.col - startPosition.col;
+
+  return (abs(deltaRow) == 1 && abs(deltaCol) == 2) || (abs(deltaRow) == 2 && abs(deltaCol) == 1);
 }
 
 int main() {
   // Testing positionFromId
   Position position = positionFromId(4, 3);
   if (position.row == 1 && position.col == 1) {
-    cout << "testPositionFromId() Test Success." << endl;
+    cout << "testPositionFromId() Success" << endl;
   }
 
   // Testing idFromPosition
   int id = idFromPosition(Position(1, 1), 3);
   if (id == 4) {
-    cout << "testIdFromPosition() Test Success." << endl;
+    cout << "testIdFromPosition() Success" << endl;
   }
 
   // Testing isValidPosition
   bool validPosition = isValidPosition(Position(1, 1), 3);
   if (validPosition) {
-    cout << "testValidPosition() Test Success." << endl;
+    cout << "testValidPosition() Success" << endl;
   }
 
   validPosition = isValidPosition(Position(3, 1), 3);
   if (!validPosition) {
-    cout << "testInvalidPosition() Test Success." << endl;
+    cout << "testInvalidPosition() Success" << endl;
+  }
+
+  // Testing isValidKnightMove
+  bool validKnightMove = isValidKnightMove(Position(0, 0), Position(1, 2), 3);
+  if (validKnightMove) {
+    cout << "testValidKnightMove() Success" << endl;
+  }
+
+  validKnightMove = isValidKnightMove(Position(0, 0), Position(1, 1), 3);
+  if (!validKnightMove) {
+    cout << "testInvalidKnightMove() Success" << endl;
+  }
+
+  validKnightMove = isValidKnightMove(Position(0, 0), Position(-1, -2), 3);
+  if (!validKnightMove) {
+    cout << "testInvalidKnightMoveOutOfBoard() Success" << endl;
   }
 }
