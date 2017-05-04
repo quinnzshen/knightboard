@@ -34,16 +34,31 @@ int idFromPosition(Position position, int boardLength) {
   return position.row * boardLength + position.col;
 }
 
+bool isValidPosition(Position position, int boardLength) {
+  return (position.row > 0) && (position.row < boardLength) && (position.col > 0) && (position.col < boardLength);
+}
+
 int main() {
   // Testing positionFromId
   Position position = positionFromId(4, 3);
   if (position.row == 1 && position.col == 1) {
-    cout << "positionFromId() Test Success." << endl;
+    cout << "testPositionFromId() Test Success." << endl;
   }
 
   // Testing idFromPosition
   int id = idFromPosition(Position(1, 1), 3);
   if (id == 4) {
-    cout << "idFromPosition() Test Success." << endl;
+    cout << "testIdFromPosition() Test Success." << endl;
+  }
+
+  // Testing isValidPosition
+  bool validPosition = isValidPosition(Position(1, 1), 3);
+  if (validPosition) {
+    cout << "testValidPosition() Test Success." << endl;
+  }
+
+  validPosition = isValidPosition(Position(3, 1), 3);
+  if (!validPosition) {
+    cout << "testInvalidPosition() Test Success." << endl;
   }
 }
