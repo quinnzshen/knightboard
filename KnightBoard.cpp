@@ -77,11 +77,9 @@ vector<vector<int>> createAdjacencyList(int boardLength) {
   for (int row = 0; row < boardLength; row++) {
     for (int col = 0; col < boardLength; col++) {
       vector<Position> validMoves = getValidMoves(Position(row, col), boardLength);
-      cout << "rc:" << row << " " << col << " size: " << validMoves.size() << endl;
       vector<int> validMovesId;
 
       for (Position move : validMoves) {
-        cout << "move: " << move.row << " " << move.col << " id: " << idFromPosition(move, boardLength) << endl;
         validMovesId.push_back(idFromPosition(move, boardLength));
       }
 
@@ -90,6 +88,16 @@ vector<vector<int>> createAdjacencyList(int boardLength) {
   }
 
   return adjacencyList;
+}
+
+void printBoardId(int boardLength) {
+  int id = 0;
+  for (int row = 0; row < boardLength; row++) {
+    for (int col = 0; col < boardLength; col++) {
+      cout << setw(4) << id++ << " ";
+    }
+    cout << endl;
+  }
 }
 
 int main() {
@@ -140,8 +148,8 @@ int main() {
     }
   }
 
-  vector<vector<int>> adjacencyList = createAdjacencyList(3);
-  for (int nodeId = 0; nodeId < 9; nodeId++) {
+  vector<vector<int>> adjacencyList = createAdjacencyList(8);
+  for (int nodeId = 0; nodeId < 8*8; nodeId++) {
     cout << nodeId << ": ";
     vector<int> node = adjacencyList.at(nodeId);
     for (int id : node) {
@@ -149,4 +157,6 @@ int main() {
     }
     cout << endl;
   }
+
+  printBoardId(8);
 }
