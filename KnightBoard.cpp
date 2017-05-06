@@ -106,9 +106,12 @@ void printBoard(Position startingPosition, Position endingPosition, Position cur
   int endingPositionId = idFromPosition(endingPosition, boardLength);
   int currentPositionId = idFromPosition(currentPosition, boardLength);
 
+  cout << "Board State:" << endl;
   for (int row = 0; row < boardLength; row++) {
     for (int col = 0; col < boardLength; col++) {
-      if (id == startingPositionId) {
+      if ((id == startingPositionId || id == endingPositionId) && id == currentPositionId) {
+        cout << "* ";
+      } else if (id == startingPositionId) {
         cout << "S ";
       } else if (id == endingPositionId) {
         cout << "E ";
@@ -122,6 +125,24 @@ void printBoard(Position startingPosition, Position endingPosition, Position cur
     }
     cout << endl;
   }
+}
+
+bool isValidSequence(vector<Position> sequence, int boardLength) {
+  if (sequence.empty()) {
+    return true;
+  }
+
+  for (int move = 0; move < (sequence.size() - 1); move++) {
+    if (!isValidKnightMove(sequence[move], sequence[move + 1], boardLength)) {
+      return false;
+    }
+  }
+
+  for (int move = 0; move < sequence.size(); move++) {
+    printBoard(sequence[0], sequence[sequence.size() - 1], sequence[move], boardLength);
+  }
+
+  return true;
 }
 
 int main() {
@@ -172,6 +193,7 @@ int main() {
     }
   }
 
+  // Testing createAdjacencyList
   vector<vector<int>> adjacencyList = createAdjacencyList(8);
   for (int nodeId = 0; nodeId < 8*8; nodeId++) {
     cout << nodeId << ": ";
@@ -183,5 +205,26 @@ int main() {
   }
 
   printBoardId(8);
-  printBoard(Position(2, 1), Position(4, 5), Position(-1, -1), 8);
+
+  // Testing isValidSequence
+  vector<Position> sequence;
+  sequence.push_back(Position(2, 1));
+  sequence.push_back(Position(4, 2));
+  sequence.push_back(Position(6, 4));
+  sequence.push_back(Position(4, 5));
+  if (isValidSequence(sequence, 8)) {
+    cout << "testIsValidSequence() Failure" << endl;
+  }
+
+  sequence.clear();
+  sequence.push_back(Position(2, 1));
+  sequence.push_back(Position(4, 2));
+  sequence.push_back(Position(6, 3));
+  sequence.push_back(Position(5, 5));
+  sequence.push_back(Position(4, 7));
+  sequence.push_back(Position(2, 6));
+  sequence.push_back(Position(4, 5));
+  if (isValidSequence(sequence, 8)) {
+    cout << "testIsValidSequence() Success" << endl;
+  }
 }
