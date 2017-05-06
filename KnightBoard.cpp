@@ -100,6 +100,30 @@ void printBoardId(int boardLength) {
   }
 }
 
+void printBoard(Position startingPosition, Position endingPosition, Position currentPosition, int boardLength) {
+  int id = 0;
+  int startingPositionId = idFromPosition(startingPosition, boardLength);
+  int endingPositionId = idFromPosition(endingPosition, boardLength);
+  int currentPositionId = idFromPosition(currentPosition, boardLength);
+
+  for (int row = 0; row < boardLength; row++) {
+    for (int col = 0; col < boardLength; col++) {
+      if (id == startingPositionId) {
+        cout << "S ";
+      } else if (id == endingPositionId) {
+        cout << "E ";
+      } else if (id == currentPositionId) {
+        cout << "K ";
+      } else {
+        cout << ". ";
+      }
+
+      id++;
+    }
+    cout << endl;
+  }
+}
+
 int main() {
   // Testing positionFromId
   Position position = positionFromId(4, 3);
@@ -159,4 +183,5 @@ int main() {
   }
 
   printBoardId(8);
+  printBoard(Position(2, 1), Position(4, 5), Position(-1, -1), 8);
 }
