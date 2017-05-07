@@ -11,6 +11,7 @@
 #include <tuple>
 #include <vector>
 #include <stack> 
+#include <queue>
 #include <iomanip> 
 using namespace std;
 
@@ -88,6 +89,38 @@ vector<vector<int>> createAdjacencyList(int boardLength) {
   }
 
   return adjacencyList;
+}
+
+vector<Position> breadthFirstSearch(int startId, int goalId, int boardLength) {
+  vector<vector<int>> adjacencyList = createAdjacencyList(boardLength);
+  vector<vector<Position>> sequenceToId (boardLength * boardLength, vector<Position>());
+
+  queue<int> queue;
+  queue.push(startId);
+
+  while (!queue.empty()) {
+    int nodeId = queue.front();
+    queue.pop();
+    for (int validMoveId : adjacencyList.at(nodeId)) {
+      if (sequenceToId.at(validMoveId).empty()) {
+        queue.push(validMoveId);
+
+        // Build the sequence that has gotten us to the current nodeId
+        for (Position position : sequenceToId[nodeId]) {
+          sequenceToId[validMoveId].push_back(position);
+        }
+
+        sequenceToId[validMoveId].push_back(positionFromId(nodeId, boardLength));
+      }
+
+      if (validMoveId == goalId) {
+        sequenceToId[validMoveId].push_back(positionFromId(validMoveId, boardLength));
+        return sequenceToId[validMoveId];
+      }
+    }
+  }
+
+  return vector<Position>();
 }
 
 void printBoardId(int boardLength) {
@@ -227,4 +260,7 @@ int main() {
   if (isValidSequence(sequence, 8)) {
     cout << "testIsValidSequence() Success" << endl;
   }
+
+  isValidSequence(breadthFirstSearch(17, 37, 8), 8);
+  isValidSequence(breadthFirstSearch(0, 8, 3), 3);
 }
