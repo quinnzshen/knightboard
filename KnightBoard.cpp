@@ -13,30 +13,17 @@
 #include <fstream>
 using namespace std;
 
-struct Position {
-  int row, col;
-
-  Position(int row, int col) {
-    this->row = row;
-    this->col = col;
-  }
-
-  friend bool operator==(Position pos1, Position pos2) {
-    return (pos1.row == pos2.row) && (pos1.col == pos2.col);
-  }
-};
-
 enum Type { WATER, ROCK, BARRIER, TELEPORT, LAVA, NORMAL };
 
-struct GridTile {
-  Position position = Position(0, 0);;
+struct Position {
+  int row, col;
   Type type;
 
-  GridTile(int row, int col, char type) {
-    this->position.row = row;
-    this->position.col = col;
+  Position(int row, int col, char ch = '.') {
+    this->row = row;
+    this->col = col;
 
-    switch(type) {
+    switch(ch) {
       case 'W':
         this->type = WATER;
         break;
@@ -58,17 +45,13 @@ struct GridTile {
     }
   }
 
-  Type getType() {
-    return this->type;
-  }
-
-  Position getPosition() {
-    return this->position;
+  friend bool operator==(Position pos1, Position pos2) {
+    return (pos1.row == pos2.row) && (pos1.col == pos2.col);
   }
 };
 
-vector<vector<GridTile>> readMapFromFile(string fileName) {
-  vector<vector<GridTile>> board;
+vector<vector<Position>> readMapFromFile(string fileName) {
+  vector<vector<Position>> board;
   fstream infile(fileName);
   char ch;
   int row = 0;
@@ -82,11 +65,11 @@ vector<vector<GridTile>> readMapFromFile(string fileName) {
     }
 
     if (col == 0) {
-      vector<GridTile> vectorRow;
+      vector<Position> vectorRow;
       board.push_back(vectorRow);
     }
 
-    board[row].push_back(GridTile(row, col, ch));
+    board[row].push_back(Position(row, col, ch));
     col++;
   }
 
@@ -108,10 +91,10 @@ bool isValidPosition(Position position, int boardLength) {
   return (position.row >= 0) && (position.row < boardLength) && (position.col >= 0) && (position.col < boardLength);
 }
 
-bool isValidPosition(Position position, vector<vector<GridTile>> board) {
+bool isValidPosition(Position position, vector<vector<Position>> board) {
   int row = position.row;
   int col = position.col; 
-  Type type = board[row][col].getType();
+  Type type = board[row][col].type;
 
   return (row >= 0) && (row < board.size()) && (col >= 0) && (col < board[row].size()) && (type != ROCK) && (type != BARRIER);
 }
@@ -127,7 +110,7 @@ bool isValidKnightMove(Position startPosition, Position endPosition, int boardLe
   return (abs(deltaRow) == 1 && abs(deltaCol) == 2) || (abs(deltaRow) == 2 && abs(deltaCol) == 1);
 }
 
-bool isValidKnightMove(Position startPosition, Position endPosition, vector<vector<GridTile>> board) {
+bool isValidKnightMove(Position startPosition, Position endPosition, vector<vector<Position>> board) {
   // Ensure that starting and ending positions are both valid
   if (!isValidPosition(startPosition, board) || !isValidPosition(endPosition, board)) {
     return false;
@@ -141,20 +124,20 @@ bool isValidKnightMove(Position startPosition, Position endPosition, vector<vect
     return false;
   }
 
-  if (deltaCol == 2 && (board[startPosition.row][startPosition.col + 1].getType() == BARRIER || board[startPosition.row][startPosition.col + 2].getType() == BARRIER)) {
+  if (deltaCol == 2 && (board[startPosition.row][startPosition.col + 1].type == BARRIER || board[startPosition.row][startPosition.col + 2].type == BARRIER)) {
     return false;
-  } else if (deltaCol == -2 && (board[startPosition.row][startPosition.col - 1].getType() == BARRIER || board[startPosition.row][startPosition.col - 2].getType() == BARRIER)) {
+  } else if (deltaCol == -2 && (board[startPosition.row][startPosition.col - 1].type == BARRIER || board[startPosition.row][startPosition.col - 2].type == BARRIER)) {
     return false;
-  } else if (deltaRow == 2 && (board[startPosition.row + 1][startPosition.col].getType() == BARRIER || board[startPosition.row + 2][startPosition.col].getType() == BARRIER)) {
+  } else if (deltaRow == 2 && (board[startPosition.row + 1][startPosition.col].type == BARRIER || board[startPosition.row + 2][startPosition.col].type == BARRIER)) {
     return false;
-  } else if (deltaRow == -2 && (board[startPosition.row - 1][startPosition.col].getType() == BARRIER || board[startPosition.row - 2][startPosition.col].getType() == BARRIER)) {
+  } else if (deltaRow == -2 && (board[startPosition.row - 1][startPosition.col].type == BARRIER || board[startPosition.row - 2][startPosition.col].type == BARRIER)) {
     return false;
   }
 
   return true;
 }
 
-vector<Position> getValidMoves(Position position, vector<vector<GridTile>> board) {
+vector<Position> getValidMoves(Position position, vector<vector<Position>> board) {
   vector<Position> potentialMoves;
 
   potentialMoves.push_back(Position(position.row + 2, position.col + 1));
@@ -259,17 +242,17 @@ void printBoardId(int boardLength) {
   }
 }
 
-void printBoard(Position startingPosition, Position endingPosition, Position currentPosition, vector<vector<GridTile>> board) {
+void printBoard(Position startingPosition, Position endingPosition, Position currentPosition, vector<vector<Position>> board) {
   cout << "Board:" << endl;
-  for (vector<GridTile> row : board) {
-    for (GridTile tile : row) {
-      if ((startingPosition == currentPosition || endingPosition == currentPosition) && tile.position == currentPosition) {
+  for (vector<Position> row : board) {
+    for (Position tile : row) {
+      if ((startingPosition == currentPosition || endingPosition == currentPosition) && tile == currentPosition) {
         cout << "* ";
-      } else if (tile.position == startingPosition) {
+      } else if (tile == startingPosition) {
         cout << "S ";
-      } else if (tile.position == endingPosition) {
+      } else if (tile == endingPosition) {
         cout << "E ";
-      } else if (tile.position == currentPosition) {
+      } else if (tile == currentPosition) {
         cout << "K ";
       } else {
         switch(tile.type) {
