@@ -27,28 +27,28 @@ struct Position {
 
     switch(ch) {
       case 'W':
-        this->type = WATER;
+        type = WATER;
         break;
       case 'R':
-        this->type = ROCK;
+        type = ROCK;
         break;
       case 'B':
-        this->type = BARRIER;
+        type = BARRIER;
         break;
       case 'T':
-        this->type = TELEPORT;
+        type = TELEPORT;
         break;
       case 'L':
-        this->type = LAVA;
+        type = LAVA;
         break;
       default:
-        this->type = NORMAL;
+        type = NORMAL;
         break;
     }
   }
 
   bool isBarrier() {
-    return this->type == BARRIER;
+    return type == BARRIER;
   }
 
   friend bool operator==(Position pos1, Position pos2) {
@@ -58,12 +58,13 @@ struct Position {
 
 class Board {
   vector<vector<Position>> board;
-  // set<Position> teleportPositions;
+  set<int> teleportPositionIds;
 
   public:Board(string fileName) {
     char ch;
     int row = 0;
     int col = 0;
+    int id = 0;
 
     fstream infile(fileName);
 
@@ -75,7 +76,7 @@ class Board {
       }
 
       if (ch == 'T') {
-        // teleportPositions.insert(Position(row, col, ch));
+        teleportPositionIds.insert(id);
       }
 
       if (col == 0) {
@@ -85,35 +86,39 @@ class Board {
 
       board[row].push_back(Position(row, col, ch));
       col++;
+      id++;
     }
 
     // Ensure that the board is a square
     assert(board.size() == board[0].size());
   }
 
-  Position get(int row, int col) {
+  Position positionFromId(int id) {
+    int row = id / board.size();
+    int col = id % board.size();
+
     return board[row][col];
   }
 
-  Position get(Position position) {
-    return board[position.row][position.col];
+  int idFromPosition(Position position) {
+    return position.row * board.size() + position.col;
   }
 
   int size() {
     return board.size();
   }
 
-  bool isValidPosition(Position position) {
-    Position boardPosition = this->get(position);
-
-    return (boardPosition.row >= 0) && (boardPosition.row < this->size()) && 
-    (boardPosition.col >= 0) && (boardPosition.col < this->size()) && 
-    (boardPosition.type != ROCK) && (boardPosition.type != BARRIER);
+  bool isValidPosition(int row, int col) {
+    if ((row >= 0) && (row < board.size()) && (col >= 0) && (col < board.size())) {
+      return (board[row][col].type != ROCK) && (board[row][col].type != BARRIER);
+    } else {
+      return false;
+    }
   }
 
   bool isValidKnightMove(Position start, Position end) {
     // Ensure that starting and ending positions are both valid
-    if (!this->isValidPosition(start) || !this->isValidPosition(end)) {
+    if (!isValidPosition(start.row, start.col) || !isValidPosition(end.row, end.col)) {
       return false;
     }
 
@@ -125,13 +130,13 @@ class Board {
       return false;
     }
 
-    if (deltaCol == 2 && (this->get(start.row, start.col + 1).isBarrier() || this->get(start.row, start.col + 2).isBarrier())) {
+    if (deltaCol == 2 && (board[start.row][start.col + 1].isBarrier() || board[start.row][start.col + 2].isBarrier())) {
       return false;
-    } else if (deltaCol == -2 && (this->get(start.row, start.col - 1).isBarrier() || this->get(start.row, start.col - 2).isBarrier())) {
+    } else if (deltaCol == -2 && (board[start.row][start.col - 1].isBarrier() || board[start.row][start.col - 2].isBarrier())) {
       return false;
-    } else if (deltaRow == 2 && (this->get(start.row + 1, start.col).isBarrier() || this->get(start.row + 2, start.col).isBarrier())) {
+    } else if (deltaRow == 2 && (board[start.row + 1][start.col].isBarrier() || board[start.row + 2][start.col].isBarrier())) {
       return false;
-    } else if (deltaRow == -2 && (this->get(start.row - 1, start.col).isBarrier() || this->get(start.row - 2, start.col).isBarrier())) {
+    } else if (deltaRow == -2 && (board[start.row - 1][start.col].isBarrier() || board[start.row - 2][start.col].isBarrier())) {
       return false;
     }
 
@@ -152,8 +157,8 @@ class Board {
 
     vector<Position> validMoves;
     for (Position move: potentialMoves) {
-      if (this->isValidKnightMove(position, move)) {
-        validMoves.push_back(move);
+      if (isValidKnightMove(position, move)) {
+        validMoves.push_back(board[move.row][move.col]);
       }
     }
 
@@ -198,6 +203,44 @@ class Board {
       }
       cout << endl;
     }
+  }
+
+  // vector<vector<tuple<int, int>>> getAdjacencyList() {
+  //   vector<vector<tuple<int, int>>> adjacencyList;
+
+  //   for (int row = 0; row < board.size(); row++) {
+  //     for (int col = 0; col < board.size(); col++) {
+  //       vector<Position> validMoves = getValidMoves(board[row][col]);
+  //       vector<tuple<int, int>> validMovesIdAndWeight;
+
+  //       for (Position move : validMoves) {
+  //         validMovesIdAndWeight.push_back(make_tuple(idFromPosition(move), 1));
+  //       }
+
+  //       adjacencyList.push_back(validMovesIdAndWeight);
+  //     }
+  //   }
+
+  //   return adjacencyList;
+  // }
+
+  vector<vector<int>> getAdjacencyList() {
+    vector<vector<int>> adjacencyList;
+
+    for (int row = 0; row < board.size(); row++) {
+      for (int col = 0; col < board.size(); col++) {
+        vector<Position> validMoves = getValidMoves(board[row][col]);
+        vector<int> validMovesId;
+
+        for (Position move : validMoves) {
+          validMovesId.push_back(idFromPosition(move));
+        }
+
+        adjacencyList.push_back(validMovesId);
+      }
+    }
+
+    return adjacencyList;
   }
 };
 
@@ -448,4 +491,17 @@ int main() {
   for (Position position: board.getValidMoves(Position(2, 2))) {
     board.printBoard(Position(2, 2), Position(10, 10), position);
   }
+
+  // Testing getAdjacencyList
+  vector<vector<int>> adjacencyList2 = board.getAdjacencyList();
+  for (int nodeId = 0; nodeId < 5 * 5; nodeId++) {
+    cout << nodeId << ": ";
+    vector<int> node = adjacencyList2.at(nodeId);
+    for (int id : node) {
+      cout << id << " ";
+    }
+    cout << endl;
+  }
+
+  printBoardId(5);
 }
