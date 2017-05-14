@@ -16,9 +16,10 @@
 using namespace std;
 
 enum Type { WATER, ROCK, BARRIER, TELEPORT, LAVA, NORMAL };
+const int MAX_WEIGHT = numeric_limits<int>::max();
 
 struct Position {
-  int row, col;
+  int row, col, weight;
   Type type;
 
   Position(int row, int col, char ch = '.') {
@@ -28,21 +29,27 @@ struct Position {
     switch(ch) {
       case 'W':
         type = WATER;
+        weight = 2;
         break;
       case 'R':
         type = ROCK;
+        weight = MAX_WEIGHT;
         break;
       case 'B':
         type = BARRIER;
+        weight = MAX_WEIGHT;
         break;
       case 'T':
         type = TELEPORT;
+        weight = 1;
         break;
       case 'L':
         type = LAVA;
+        weight = 4;
         break;
       default:
         type = NORMAL;
+        weight = 1;
         break;
     }
   }
@@ -205,16 +212,17 @@ class Board {
     }
   }
 
-  vector<vector<tuple<int, int>>> getAdjacencyList() {
-    vector<vector<tuple<int, int>>> adjacencyList;
+  vector<vector<Position>> getAdjacencyList() {
+    vector<vector<Position>> adjacencyList;
 
     for (int row = 0; row < board.size(); row++) {
       for (int col = 0; col < board.size(); col++) {
         vector<Position> validMoves;
-        vector<tuple<int, int>> validMovesIdAndWeight;
 
         // If the valid move ends on a teleport position, figure out valid teleport locations.
         for (Position move : getValidMoves(board[row][col])) {
+          // Ensure that the valid move's type is not a rock or barrier.
+          assert(move.type != BARRIER && move.type != ROCK);
           int currentPositionId = idFromPosition(move);
 
           if (teleportPositionIds.find(currentPositionId) != teleportPositionIds.end()) {
@@ -228,29 +236,7 @@ class Board {
           }
         }
 
-        // Determine the weight of the edge for all valid moves.
-        for (Position move : validMoves) {
-          int weight;
-
-          // Ensure that the valid move's type is not a rock or barrier.
-          assert(move.type != BARRIER && move.type != ROCK);
-
-          switch(move.type) {
-            case WATER:
-              weight = 2;
-              break;
-            case LAVA:
-              weight = 4;
-              break;
-            default:
-              weight = 1;
-              break;
-          }
-
-          validMovesIdAndWeight.push_back(make_tuple(idFromPosition(move), weight));
-        }
-
-        adjacencyList.push_back(validMovesIdAndWeight);
+        adjacencyList.push_back(validMoves);
       }
     }
 
@@ -509,14 +495,12 @@ int main() {
   // }
 
   // Testing getAdjacencyList
-  vector<vector<tuple<int, int>>> adjacencyList2 = board.getAdjacencyList();
+  vector<vector<Position>> adjacencyList2 = board.getAdjacencyList();
   for (int nodeId = 0; nodeId < 5 * 5; nodeId++) {
     cout << nodeId << ": ";
-    vector<tuple<int, int>> node = adjacencyList2.at(nodeId);
-    for (tuple<int, int> idAndWeight : node) {
-      int id, weight;
-      tie(id, weight) = idAndWeight;
-      cout << id << "(" << weight << ") ";
+    vector<Position> node = adjacencyList2.at(nodeId);
+    for (Position position : node) {
+      cout << board.idFromPosition(position) << "(" << position.weight << ") ";
     }
     cout << endl;
   }
