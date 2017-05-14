@@ -9,7 +9,7 @@
 #include <iostream>
 #include <vector>
 #include <queue>
-#include <iomanip> 
+#include <iomanip>
 #include <fstream>
 #include <set>
 #include <cassert>
@@ -199,44 +199,58 @@ class Board {
               break;
           }
         }
-        
+
       }
       cout << endl;
     }
   }
 
-  // vector<vector<tuple<int, int>>> getAdjacencyList() {
-  //   vector<vector<tuple<int, int>>> adjacencyList;
-
-  //   for (int row = 0; row < board.size(); row++) {
-  //     for (int col = 0; col < board.size(); col++) {
-  //       vector<Position> validMoves = getValidMoves(board[row][col]);
-  //       vector<tuple<int, int>> validMovesIdAndWeight;
-
-  //       for (Position move : validMoves) {
-  //         validMovesIdAndWeight.push_back(make_tuple(idFromPosition(move), 1));
-  //       }
-
-  //       adjacencyList.push_back(validMovesIdAndWeight);
-  //     }
-  //   }
-
-  //   return adjacencyList;
-  // }
-
-  vector<vector<int>> getAdjacencyList() {
-    vector<vector<int>> adjacencyList;
+  vector<vector<tuple<int, int>>> getAdjacencyList() {
+    vector<vector<tuple<int, int>>> adjacencyList;
 
     for (int row = 0; row < board.size(); row++) {
       for (int col = 0; col < board.size(); col++) {
-        vector<Position> validMoves = getValidMoves(board[row][col]);
-        vector<int> validMovesId;
+        vector<Position> validMoves;
+        vector<tuple<int, int>> validMovesIdAndWeight;
 
-        for (Position move : validMoves) {
-          validMovesId.push_back(idFromPosition(move));
+        // If the valid move ends on a teleport position, figure out valid teleport locations.
+        for (Position move : getValidMoves(board[row][col])) {
+          int currentPositionId = idFromPosition(move);
+
+          if (teleportPositionIds.find(currentPositionId) != teleportPositionIds.end()) {
+            for (int teleportPositionId : teleportPositionIds) {
+              if (currentPositionId != teleportPositionId) {
+                validMoves.push_back(positionFromId(teleportPositionId));
+              }
+            }
+          } else {
+            validMoves.push_back(move);
+          }
         }
 
-        adjacencyList.push_back(validMovesId);
+        // Determine the weight of the edge for all valid moves.
+        for (Position move : validMoves) {
+          int weight;
+
+          // Ensure that the valid move's type is not a rock or barrier.
+          assert(move.type != BARRIER && move.type != ROCK);
+
+          switch(move.type) {
+            case WATER:
+              weight = 2;
+              break;
+            case LAVA:
+              weight = 4;
+              break;
+            default:
+              weight = 1;
+              break;
+          }
+
+          validMovesIdAndWeight.push_back(make_tuple(idFromPosition(move), weight));
+        }
+
+        adjacencyList.push_back(validMovesIdAndWeight);
       }
     }
 
@@ -487,21 +501,23 @@ int main() {
   Board board = Board("boardBarrierTest.txt");
   board.printBoard(Position(2, 2), Position(10, 10), Position(10, 10));
 
-  cout << "Valid Moves:" << endl;
-  for (Position position: board.getValidMoves(Position(2, 2))) {
-    board.printBoard(Position(2, 2), Position(10, 10), position);
-  }
+  printBoardId(5);
+
+  // cout << "Valid Moves:" << endl;
+  // for (Position position: board.getValidMoves(Position(2, 2))) {
+  //   board.printBoard(Position(2, 2), Position(10, 10), position);
+  // }
 
   // Testing getAdjacencyList
-  vector<vector<int>> adjacencyList2 = board.getAdjacencyList();
+  vector<vector<tuple<int, int>>> adjacencyList2 = board.getAdjacencyList();
   for (int nodeId = 0; nodeId < 5 * 5; nodeId++) {
     cout << nodeId << ": ";
-    vector<int> node = adjacencyList2.at(nodeId);
-    for (int id : node) {
-      cout << id << " ";
+    vector<tuple<int, int>> node = adjacencyList2.at(nodeId);
+    for (tuple<int, int> idAndWeight : node) {
+      int id, weight;
+      tie(id, weight) = idAndWeight;
+      cout << id << "(" << weight << ") ";
     }
     cout << endl;
   }
-
-  printBoardId(5);
 }
