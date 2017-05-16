@@ -7,6 +7,7 @@
 //============================================================================
 
 #include <iostream>
+#include <algorithm>
 #include <vector>
 #include <queue>
 #include <iomanip>
@@ -60,6 +61,71 @@ struct Position {
 
   friend bool operator==(Position pos1, Position pos2) {
     return (pos1.row == pos2.row) && (pos1.col == pos2.col);
+  }
+
+  friend bool operator!=(Position pos1, Position pos2) {
+    return (pos1.row != pos2.row) || (pos1.col != pos2.col);
+  }
+
+  friend bool operator<(Position pos1, Position pos2) {
+    return pos1.weight > pos2.weight;
+  }
+};
+
+const Position MOVE_START = Position(-1, -1, '.');
+
+struct Move {
+  Position position = MOVE_START;
+  Position parentPosition = MOVE_START;
+  int totalWeight;
+
+  Move(Position current, Position parent, int weight) {
+    position = current;
+    parentPosition = parent;
+    totalWeight = weight;
+  }
+
+  friend bool operator==(Move move1, Move move2) {
+    return move1.position == move2.position;
+  }
+
+  friend bool operator<(Move move1, Move move2) {
+    return move1.totalWeight > move2.totalWeight;
+  }
+};
+
+class Sequence {
+  vector<Position> sequence;
+  public:int weight;
+
+  public:Sequence() {
+    weight = 0;
+  }
+
+  public:Sequence(Position position) {
+    sequence.push_back(position);
+    weight = position.weight;
+  }
+
+  void add(Position position) {
+    sequence.push_back(position);
+    weight += position.weight;
+  }
+
+  Position get(int index) {
+    return sequence[index];
+  }
+
+  bool empty() {
+    return sequence.empty();
+  }
+
+  int size() {
+    return sequence.size();
+  }
+
+  friend bool operator<(Sequence seq1, Sequence seq2) {
+    return seq1.weight > seq2.weight;
   }
 };
 
@@ -129,6 +195,17 @@ class Board {
       return false;
     }
 
+    // Determine if it's possible to teleport to the end location.
+    if (end.type == TELEPORT) {
+      for (Position option : getValidMoves(start)) {
+        if (option == end) {
+          return true;
+        }
+      }
+      return false;
+    }
+
+    // Otherwise, determine if the move was a valid knight jump.
     int deltaRow = end.row - start.row;
     int deltaCol = end.col - start.col;
 
@@ -164,7 +241,21 @@ class Board {
 
     vector<Position> validMoves;
     for (Position move: potentialMoves) {
-      if (isValidKnightMove(position, move)) {
+      // Ensure that the valid move's type is not a rock or barrier.
+      if (move.type == BARRIER || move.type == ROCK) {
+        continue;
+      }
+
+      int moveId = idFromPosition(move);
+
+      // If the move ends on a teleport type, find valid teleport locations.
+      if (teleportPositionIds.find(moveId) != teleportPositionIds.end()) {
+        for (int teleportPositionId : teleportPositionIds) {
+          if (moveId != teleportPositionId) {
+            validMoves.push_back(positionFromId(teleportPositionId));
+          }
+        }
+      } else if (isValidKnightMove(position, move)) {
         validMoves.push_back(board[move.row][move.col]);
       }
     }
@@ -217,30 +308,89 @@ class Board {
 
     for (int row = 0; row < board.size(); row++) {
       for (int col = 0; col < board.size(); col++) {
-        vector<Position> validMoves;
-
-        // If the valid move ends on a teleport position, figure out valid teleport locations.
-        for (Position move : getValidMoves(board[row][col])) {
-          // Ensure that the valid move's type is not a rock or barrier.
-          assert(move.type != BARRIER && move.type != ROCK);
-          int currentPositionId = idFromPosition(move);
-
-          if (teleportPositionIds.find(currentPositionId) != teleportPositionIds.end()) {
-            for (int teleportPositionId : teleportPositionIds) {
-              if (currentPositionId != teleportPositionId) {
-                validMoves.push_back(positionFromId(teleportPositionId));
-              }
-            }
-          } else {
-            validMoves.push_back(move);
-          }
-        }
-
-        adjacencyList.push_back(validMoves);
+        adjacencyList.push_back(getValidMoves(board[row][col]));
       }
     }
 
     return adjacencyList;
+  }
+
+  vector<Position> dijkstra(int startId, int goalId) {
+    vector<vector<Position>> adjacencyList = getAdjacencyList();
+    vector<vector<Move>> boardMoves (board.size(), vector<Move> (board.size(), Move(MOVE_START, MOVE_START, MAX_WEIGHT)));
+
+    vector<Move> priorityQueue;
+    Position startPosition = positionFromId(startId);
+    boardMoves[startPosition.row][startPosition.col] = Move(startPosition, MOVE_START, 0);
+
+    priorityQueue.push_back(Move(startPosition, MOVE_START, startPosition.weight));
+    push_heap(priorityQueue.begin(), priorityQueue.end());
+
+    while (!priorityQueue.empty()) {
+      Move currentMove = priorityQueue.front();
+      cout << "exploring position: " << currentMove.position.row << ", " << currentMove.position.col << " [" << currentMove.totalWeight << "]" << endl;
+
+      pop_heap(priorityQueue.begin(), priorityQueue.end());
+      priorityQueue.pop_back();
+
+      int currentMoveId = idFromPosition(currentMove.position);
+
+      for (Position newPosition : adjacencyList.at(currentMoveId)) {
+        Move newMove = Move(newPosition, currentMove.position, currentMove.totalWeight + newPosition.weight);
+        int newPositionId = idFromPosition(newPosition);
+
+        if (newMove.totalWeight < boardMoves[newPosition.row][newPosition.col].totalWeight) {
+          boardMoves[newPosition.row][newPosition.col] = newMove;
+
+          vector<Move>::iterator itr = find(priorityQueue.begin(), priorityQueue.end(), newMove);
+          if (itr != priorityQueue.end()) {
+            priorityQueue.erase(itr);
+            make_heap(priorityQueue.begin(), priorityQueue.end());
+          }
+
+          priorityQueue.push_back(newMove);
+          push_heap(priorityQueue.begin(), priorityQueue.end());
+        }
+
+        if (newPositionId == goalId) {
+          // Once we've reached the goal, return the move sequence.
+          vector<Position> sequence;
+          Position backtrack = newPosition;
+
+          while (backtrack != MOVE_START) {
+            cout << "backtrack: " << backtrack.row << ", " << backtrack.col << endl;
+            sequence.insert(sequence.begin(), backtrack);
+            backtrack = boardMoves[backtrack.row][backtrack.col].parentPosition;
+            cout << "backtrack: " << backtrack.row << ", " << backtrack.col << endl;
+          }
+
+          return sequence;
+        }
+      }
+    }
+
+    cout << "No sequence found" << endl;
+    return vector<Position>();
+  }
+
+  bool isValidSequence(vector<Position> sequence) {
+    if (sequence.empty()) {
+      return true;
+    }
+
+    for (int move = 0; move < (sequence.size() - 1); move++) {
+      cout << "Checking validity of: " << sequence[move].row << ", " << sequence[move].col << endl;
+      if (!isValidKnightMove(sequence[move], sequence[move + 1])) {
+        cout << "Failed validity." << endl;
+        return false;
+      }
+    }
+
+    for (int move = 0; move < sequence.size(); move++) {
+      printBoard(sequence[0], sequence[sequence.size() - 1], sequence[move]);
+    }
+
+    return true;
   }
 };
 
@@ -381,7 +531,8 @@ void printBoard(Position startingPosition, Position endingPosition, Position cur
 }
 
 bool isValidSequence(vector<Position> sequence, int boardLength) {
-  if (sequence.empty()) {
+  if (sequence.empty()
+) {
     return true;
   }
 
@@ -494,14 +645,59 @@ int main() {
   //   board.printBoard(Position(2, 2), Position(10, 10), position);
   // }
 
+  board = Board("boardTeleTest.txt");
+
   // Testing getAdjacencyList
-  vector<vector<Position>> adjacencyList2 = board.getAdjacencyList();
-  for (int nodeId = 0; nodeId < 5 * 5; nodeId++) {
-    cout << nodeId << ": ";
-    vector<Position> node = adjacencyList2.at(nodeId);
-    for (Position position : node) {
-      cout << board.idFromPosition(position) << "(" << position.weight << ") ";
-    }
-    cout << endl;
-  }
+  // vector<vector<Position>> adjacencyList2 = board.getAdjacencyList();
+  // for (int nodeId = 0; nodeId < board.size() * board.size(); nodeId++) {
+  //   cout << nodeId << ": ";
+  //   vector<Position> node = adjacencyList2.at(nodeId);
+  //   for (Position position : node) {
+  //     cout << board.idFromPosition(position) << "(" << position.weight << ") ";
+  //   }
+  //   cout << endl;
+  // }
+
+  board.printBoard(Position(-1, -1), Position(-1, -1), Position(-1, -1));
+  cout << boolalpha << board.isValidSequence(board.dijkstra(0, 99)) << endl;
+
+  // board = Board("board.txt");
+  // cout << boolalpha << board.isValidSequence(board.dijkstra(835, 13)) << endl;
+
+  // priority_queue<Sequence> queue;
+
+  //
+  // Sequence sequence2;
+  // sequence2.add(Position(2, 1, 'L'));
+  // sequence2.add(Position(4, 2, 'L'));
+  //
+  // Sequence sequence1;
+  // sequence1.add(Position(2, 1, '.'));
+  // sequence1.add(Position(4, 2, '.'));
+  // sequence1.add(Position(6, 3, '.'));
+  // queue.push(sequence1);
+  // sequence1.add(Position(5, 5, '.'));
+  // sequence1.add(Position(4, 7, '.'));
+  // sequence1.add(Position(2, 6, '.'));
+  // sequence1.add(Position(4, 5, '.'));
+  // queue.push(sequence1);
+  // queue.push(sequence2);
+
+  // cout << queue.top().weight << endl;
+  // queue.pop();
+  // cout << queue.top().weight << endl;
+  //
+  // cout << boolalpha << board.isValidSequence(sequence1) << endl;
+  // cout << sequence1.weight << endl;
+
+  // queue.push(Position(1, 1, '.'));
+  // queue.push(Position(2, 2, 'L'));
+  // queue.push(Position(1, 2, '.'));
+  //
+  // cout << queue.top().row << ", " << queue.top().col << endl;
+  // queue.pop();
+  // cout << queue.top().row << ", " << queue.top().col << endl;
+  // queue.pop();
+  // cout << queue.top().row << ", " << queue.top().col << endl;
+
 }
