@@ -23,6 +23,12 @@ struct Position {
   int row, col, weight;
   Type type;
 
+  Position(int row, int col, int weight) {
+    this->row = row;
+    this->col = col;
+    this->weight = weight;
+  }
+
   Position(int row, int col, char ch = '.') {
     this->row = row;
     this->col = col;
@@ -72,17 +78,21 @@ struct Position {
   }
 };
 
-const Position MOVE_START = Position(-1, -1, '.');
+const Position POSITION_BEGIN = Position(-1, -1, 0);
 
 struct Move {
-  Position position = MOVE_START;
-  Position parentPosition = MOVE_START;
+  Position position = POSITION_BEGIN;
+  Position parentPosition = POSITION_BEGIN;
   int totalWeight;
 
   Move(Position current, Position parent, int weight) {
     position = current;
     parentPosition = parent;
     totalWeight = weight;
+  }
+
+  Move newMove(Position newPosition) {
+    return Move(newPosition, position, totalWeight + newPosition.weight);
   }
 
   friend bool operator==(Move move1, Move move2) {
@@ -317,13 +327,14 @@ class Board {
 
   vector<Position> dijkstra(int startId, int goalId) {
     vector<vector<Position>> adjacencyList = getAdjacencyList();
-    vector<vector<Move>> boardMoves (board.size(), vector<Move> (board.size(), Move(MOVE_START, MOVE_START, MAX_WEIGHT)));
-
+    vector<vector<Move>> boardMoves (board.size(), vector<Move> (board.size(), Move(POSITION_BEGIN, POSITION_BEGIN, MAX_WEIGHT)));
     vector<Move> priorityQueue;
-    Position startPosition = positionFromId(startId);
-    boardMoves[startPosition.row][startPosition.col] = Move(startPosition, MOVE_START, 0);
 
-    priorityQueue.push_back(Move(startPosition, MOVE_START, startPosition.weight));
+    Position startPosition = positionFromId(startId);
+    Move startingMove = Move(startPosition, POSITION_BEGIN, startPosition.weight);
+
+    boardMoves[startPosition.row][startPosition.col] = startingMove;
+    priorityQueue.push_back(startingMove);
     push_heap(priorityQueue.begin(), priorityQueue.end());
 
     while (!priorityQueue.empty()) {
@@ -336,7 +347,7 @@ class Board {
       int currentMoveId = idFromPosition(currentMove.position);
 
       for (Position newPosition : adjacencyList.at(currentMoveId)) {
-        Move newMove = Move(newPosition, currentMove.position, currentMove.totalWeight + newPosition.weight);
+        Move newMove = currentMove.newMove(newPosition);
         int newPositionId = idFromPosition(newPosition);
 
         if (newMove.totalWeight < boardMoves[newPosition.row][newPosition.col].totalWeight) {
@@ -357,7 +368,7 @@ class Board {
           vector<Position> sequence;
           Position backtrack = newPosition;
 
-          while (backtrack != MOVE_START) {
+          while (backtrack != POSITION_BEGIN) {
             cout << "backtrack: " << backtrack.row << ", " << backtrack.col << endl;
             sequence.insert(sequence.begin(), backtrack);
             backtrack = boardMoves[backtrack.row][backtrack.col].parentPosition;
