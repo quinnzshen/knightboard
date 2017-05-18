@@ -410,7 +410,7 @@ class Board {
 };
 
 int main() {
-  Board testBoard = Board("lvl3Board.txt");
+  Board testBoard = Board("boards/lvl3Board.txt");
 
   // Testing positionFromId
   Position position = testBoard.positionFromId(4);
@@ -482,7 +482,7 @@ int main() {
   // Level 3
   testBoard.isValidSequence(testBoard.dijkstra(17, 37));
 
-  Board board = Board("lvl4BoardTest.txt");
+  Board board = Board("boards/lvl4BoardTest.txt");
   validMoves = board.getValidMoves(2, 2);
 
   cout << validMoves.size() << endl;
@@ -495,10 +495,10 @@ int main() {
   assert(find(validMoves.begin(), validMoves.end(), Position(4, 0)) != validMoves.end());
   assert(find(validMoves.begin(), validMoves.end(), Position(1, 4)) != validMoves.end());
 
-  board = Board("boardTeleTest.txt");
+  board = Board("boards/boardTeleTest.txt");
 
   // Testing getAdjacencyList w/ weights on complex board
-  board = Board("testAdjacencyListBoard.txt");
+  board = Board("boards/testAdjacencyListBoard.txt");
   adjacencyList = board.getAdjacencyList();
   assert(adjacencyList[0].size() == 0);
   assert(adjacencyList[1].size() == 1);
@@ -527,6 +527,6 @@ int main() {
   board.printBoard(Position(-1, -1), Position(-1, -1), Position(-1, -1));
   board.isValidSequence(board.dijkstra(0, 99));
 
-  board = Board("board.txt");
+  board = Board("boards/board.txt");
   board.isValidSequence(board.dijkstra(13, 856));
 }
