@@ -104,41 +104,6 @@ struct Move {
   }
 };
 
-class Sequence {
-  vector<Position> sequence;
-  public:int weight;
-
-  public:Sequence() {
-    weight = 0;
-  }
-
-  public:Sequence(Position position) {
-    sequence.push_back(position);
-    weight = position.weight;
-  }
-
-  void add(Position position) {
-    sequence.push_back(position);
-    weight += position.weight;
-  }
-
-  Position get(int index) {
-    return sequence[index];
-  }
-
-  bool empty() {
-    return sequence.empty();
-  }
-
-  int size() {
-    return sequence.size();
-  }
-
-  friend bool operator<(Sequence seq1, Sequence seq2) {
-    return seq1.weight > seq2.weight;
-  }
-};
-
 class Board {
   vector<vector<Position>> board;
   set<int> teleportPositionIds;
@@ -199,19 +164,29 @@ class Board {
     }
   }
 
+  bool isBarrierBlocking(Position start, Position end) {
+    int deltaRow = end.row - start.row;
+    int deltaCol = end.col - start.col;
+
+    // Ensure that the move is a valid knight move
+    assert((abs(deltaRow) == 1 && abs(deltaCol) == 2) || (abs(deltaRow) == 2 && abs(deltaCol) == 1));
+
+    if (deltaCol == 2 && (board[start.row][start.col + 1].isBarrier() || board[start.row][start.col + 2].isBarrier())) {
+      return true;
+    } else if (deltaCol == -2 && (board[start.row][start.col - 1].isBarrier() || board[start.row][start.col - 2].isBarrier())) {
+      return true;
+    } else if (deltaRow == 2 && (board[start.row + 1][start.col].isBarrier() || board[start.row + 2][start.col].isBarrier())) {
+      return true;
+    } else if (deltaRow == -2 && (board[start.row - 1][start.col].isBarrier() || board[start.row - 2][start.col].isBarrier())) {
+      return true;
+    }
+
+    return false;
+  }
+
   bool isValidKnightMove(Position start, Position end) {
     // Ensure that starting and ending positions are both valid
     if (!isValidPosition(start.row, start.col) || !isValidPosition(end.row, end.col)) {
-      return false;
-    }
-
-    // Determine if it's possible to teleport to the end location.
-    if (end.type == TELEPORT) {
-      for (Position option : getValidMoves(start)) {
-        if (option == end) {
-          return true;
-        }
-      }
       return false;
     }
 
@@ -220,39 +195,47 @@ class Board {
     int deltaCol = end.col - start.col;
 
     // Ensure that the move is a valid knight move
-    if (!((abs(deltaRow) == 1 && abs(deltaCol) == 2) || (abs(deltaRow) == 2 && abs(deltaCol) == 1))) {
+    if(!((abs(deltaRow) == 1 && abs(deltaCol) == 2) || (abs(deltaRow) == 2 && abs(deltaCol) == 1))) {
       return false;
     }
 
-    if (deltaCol == 2 && (board[start.row][start.col + 1].isBarrier() || board[start.row][start.col + 2].isBarrier())) {
-      return false;
-    } else if (deltaCol == -2 && (board[start.row][start.col - 1].isBarrier() || board[start.row][start.col - 2].isBarrier())) {
-      return false;
-    } else if (deltaRow == 2 && (board[start.row + 1][start.col].isBarrier() || board[start.row + 2][start.col].isBarrier())) {
-      return false;
-    } else if (deltaRow == -2 && (board[start.row - 1][start.col].isBarrier() || board[start.row - 2][start.col].isBarrier())) {
+    // Otherwise determine if there are barriers blocking the move
+    if(isBarrierBlocking(start, end)) {
       return false;
     }
 
     return true;
   }
 
-  vector<Position> getValidMoves(Position position) {
-    vector<Position> potentialMoves;
+  vector<Position> getValidMoves(int row, int col) {
+    return getValidMoves(board[row][col]);
+  }
 
-    potentialMoves.push_back(Position(position.row + 2, position.col + 1));
-    potentialMoves.push_back(Position(position.row + 2, position.col - 1));
-    potentialMoves.push_back(Position(position.row - 2, position.col + 1));
-    potentialMoves.push_back(Position(position.row - 2, position.col - 1));
-    potentialMoves.push_back(Position(position.row + 1, position.col + 2));
-    potentialMoves.push_back(Position(position.row + 1, position.col - 2));
-    potentialMoves.push_back(Position(position.row - 1, position.col + 2));
-    potentialMoves.push_back(Position(position.row - 1, position.col - 2));
+  vector<Position> getValidMoves(Position position) {
+    vector<Position> potentialPositions;
+
+    // Ensure that our initial position is valid
+    if (!isValidPosition(position.row, position.col)) {
+      return potentialPositions;
+    }
+
+    vector<pair<int, int>> deltas = {
+      make_pair(2, -1), make_pair(2, 1), make_pair(-2, -1), make_pair(-2, 1),
+      make_pair(1, 2), make_pair(1, -2), make_pair(-1, 2), make_pair(-1, -2)
+    };
+
+    // Ensure that our attempted move doesn't land on a barrier/rock or out of bounds
+    for (pair<int, int> delta : deltas) {
+      auto [deltaRow, deltaCol] = delta;
+      if (isValidPosition(position.row + deltaRow, position.col + deltaCol)) {
+        potentialPositions.push_back(board[position.row + deltaRow][position.col + deltaCol]);
+      }
+    }
 
     vector<Position> validMoves;
-    for (Position move: potentialMoves) {
-      // Ensure that the valid move's type is not a rock or barrier.
-      if (move.type == BARRIER || move.type == ROCK) {
+    for (Position move: potentialPositions) {
+      // Ensure there are no barriers blocking the move
+      if (isBarrierBlocking(position, move)) {
         continue;
       }
 
@@ -265,7 +248,7 @@ class Board {
             validMoves.push_back(positionFromId(teleportPositionId));
           }
         }
-      } else if (isValidKnightMove(position, move)) {
+      } else {
         validMoves.push_back(board[move.row][move.col]);
       }
     }
@@ -384,14 +367,24 @@ class Board {
     return vector<Position>();
   }
 
+  bool isValidTeleport(Position start, Position end) {
+    vector<Position> potentialPositions = getValidMoves(start);
+    return find(potentialPositions.begin(), potentialPositions.end(), end) != potentialPositions.end();
+  }
+
   bool isValidSequence(vector<Position> sequence) {
     if (sequence.empty()) {
       return true;
     }
 
     for (int move = 0; move < (sequence.size() - 1); move++) {
-      cout << "Checking validity of: " << sequence[move].row << ", " << sequence[move].col << endl;
-      if (!isValidKnightMove(sequence[move], sequence[move + 1])) {
+      Position currentPosition = sequence[move];
+      Position nextPosition = sequence[move + 1];
+
+      cout << "Checking validity of: " << currentPosition.row << ", " << currentPosition.col << endl;
+
+
+      if (!isValidKnightMove(currentPosition, nextPosition) && !isValidTeleport(currentPosition, nextPosition)) {
         cout << "Failed validity." << endl;
         return false;
       }
@@ -403,205 +396,52 @@ class Board {
 
     return true;
   }
+
+  void printBoardId() {
+    int maxDigits = ((board.size() * board.size()) % 10) + 1;
+    int id = 0;
+    for (int row = 0; row < board.size(); row++) {
+      for (int col = 0; col < board.size(); col++) {
+        cout << setw(maxDigits) << id++ << " ";
+      }
+      cout << endl;
+    }
+  }
 };
 
-Position positionFromId(int id, int boardLength) {
-  int row = id / boardLength;
-  int col = id % boardLength;
-
-  return Position(row, col);
-}
-
-int idFromPosition(Position position, int boardLength) {
-  return position.row * boardLength + position.col;
-}
-
-bool isValidPosition(Position position, int boardLength) {
-  return (position.row >= 0) && (position.row < boardLength) && (position.col >= 0) && (position.col < boardLength);
-}
-
-bool isValidKnightMove(Position startPosition, Position endPosition, int boardLength) {
-  if (!isValidPosition(startPosition, boardLength) || !isValidPosition(endPosition, boardLength)) {
-    return false;
-  }
-
-  int deltaRow = endPosition.row - startPosition.row;
-  int deltaCol = endPosition.col - startPosition.col;
-
-  return (abs(deltaRow) == 1 && abs(deltaCol) == 2) || (abs(deltaRow) == 2 && abs(deltaCol) == 1);
-}
-
-vector<Position> getValidMoves(Position position, int boardLength) {
-  vector<Position> potentialMoves;
-
-  potentialMoves.push_back(Position(position.row + 2, position.col + 1));
-  potentialMoves.push_back(Position(position.row + 2, position.col - 1));
-  potentialMoves.push_back(Position(position.row - 2, position.col + 1));
-  potentialMoves.push_back(Position(position.row - 2, position.col - 1));
-  potentialMoves.push_back(Position(position.row + 1, position.col + 2));
-  potentialMoves.push_back(Position(position.row + 1, position.col - 2));
-  potentialMoves.push_back(Position(position.row - 1, position.col + 2));
-  potentialMoves.push_back(Position(position.row - 1, position.col - 2));
-
-  vector<Position> validMoves;
-  for (Position move : potentialMoves) {
-    if (isValidKnightMove(position, move, boardLength)) {
-      validMoves.push_back(move);
-    }
-  }
-
-  return validMoves;
-}
-
-vector<vector<int>> createAdjacencyList(int boardLength) {
-  vector<vector<int>> adjacencyList;
-
-  for (int row = 0; row < boardLength; row++) {
-    for (int col = 0; col < boardLength; col++) {
-      vector<Position> validMoves = getValidMoves(Position(row, col), boardLength);
-      vector<int> validMovesId;
-
-      for (Position move : validMoves) {
-        validMovesId.push_back(idFromPosition(move, boardLength));
-      }
-
-      adjacencyList.push_back(validMovesId);
-    }
-  }
-
-  return adjacencyList;
-}
-
-vector<Position> breadthFirstSearch(int startId, int goalId, int boardLength) {
-  vector<vector<int>> adjacencyList = createAdjacencyList(boardLength);
-  vector<vector<Position>> sequenceToId (boardLength * boardLength, vector<Position>());
-
-  queue<int> queue;
-  queue.push(startId);
-
-  while (!queue.empty()) {
-    int nodeId = queue.front();
-    queue.pop();
-    for (int validMoveId : adjacencyList.at(nodeId)) {
-      if (sequenceToId.at(validMoveId).empty()) {
-        queue.push(validMoveId);
-
-        // Build the sequence that has gotten us to the current nodeId
-        for (Position position : sequenceToId[nodeId]) {
-          sequenceToId[validMoveId].push_back(position);
-        }
-
-        sequenceToId[validMoveId].push_back(positionFromId(nodeId, boardLength));
-      }
-
-      if (validMoveId == goalId) {
-        sequenceToId[validMoveId].push_back(positionFromId(validMoveId, boardLength));
-        return sequenceToId[validMoveId];
-      }
-    }
-  }
-
-  return vector<Position>();
-}
-
-void printBoardId(int boardLength) {
-  int id = 0;
-  for (int row = 0; row < boardLength; row++) {
-    for (int col = 0; col < boardLength; col++) {
-      cout << setw(4) << id++ << " ";
-    }
-    cout << endl;
-  }
-}
-
-void printBoard(Position startingPosition, Position endingPosition, Position currentPosition, int boardLength) {
-  int id = 0;
-  int startingPositionId = idFromPosition(startingPosition, boardLength);
-  int endingPositionId = idFromPosition(endingPosition, boardLength);
-  int currentPositionId = idFromPosition(currentPosition, boardLength);
-
-  cout << "Board State:" << endl;
-  for (int row = 0; row < boardLength; row++) {
-    for (int col = 0; col < boardLength; col++) {
-      if ((id == startingPositionId || id == endingPositionId) && id == currentPositionId) {
-        cout << "* ";
-      } else if (id == startingPositionId) {
-        cout << "S ";
-      } else if (id == endingPositionId) {
-        cout << "E ";
-      } else if (id == currentPositionId) {
-        cout << "K ";
-      } else {
-        cout << ". ";
-      }
-
-      id++;
-    }
-    cout << endl;
-  }
-}
-
-bool isValidSequence(vector<Position> sequence, int boardLength) {
-  if (sequence.empty()
-) {
-    return true;
-  }
-
-  for (int move = 0; move < (sequence.size() - 1); move++) {
-    if (!isValidKnightMove(sequence[move], sequence[move + 1], boardLength)) {
-      return false;
-    }
-  }
-
-  for (int move = 0; move < sequence.size(); move++) {
-    printBoard(sequence[0], sequence[sequence.size() - 1], sequence[move], boardLength);
-  }
-
-  return true;
-}
-
 int main() {
+  Board testBoard = Board("lvl3Board.txt");
+
   // Testing positionFromId
-  Position position = positionFromId(4, 3);
-  if (position.row == 1 && position.col == 1) {
-    cout << "testPositionFromId() Success" << endl;
-  }
+  Position position = testBoard.positionFromId(4);
+  assert(position.row == 0 && position.col == 4);
 
   // Testing idFromPosition
-  int id = idFromPosition(Position(1, 1), 3);
-  if (id == 4) {
-    cout << "testIdFromPosition() Success" << endl;
-  }
+  int id = testBoard.idFromPosition(Position(1, 1));
+  assert(id == 9);
 
   // Testing isValidPosition
-  bool validPosition = isValidPosition(Position(1, 1), 3);
-  if (validPosition) {
-    cout << "testValidPosition() Success" << endl;
-  }
+  bool validPosition = testBoard.isValidPosition(1, 1);
+  assert(validPosition);
 
-  validPosition = isValidPosition(Position(3, 1), 3);
-  if (!validPosition) {
-    cout << "testInvalidPosition() Success" << endl;
-  }
+  // Testing isValidPosition (out of board)
+  validPosition = testBoard.isValidPosition(9, 1);
+  assert(!validPosition);
 
   // Testing isValidKnightMove
-  bool validKnightMove = isValidKnightMove(Position(0, 0), Position(1, 2), 3);
-  if (validKnightMove) {
-    cout << "testValidKnightMove() Success" << endl;
-  }
+  bool validKnightMove = testBoard.isValidKnightMove(Position(0, 0), Position(1, 2));
+  assert(validKnightMove);
 
-  validKnightMove = isValidKnightMove(Position(0, 0), Position(1, 1), 3);
-  if (!validKnightMove) {
-    cout << "testInvalidKnightMove() Success" << endl;
-  }
+  // Testing isValidKnightMove (invalid knight jump)
+  validKnightMove = testBoard.isValidKnightMove(Position(0, 0), Position(1, 1));
+  assert(!validKnightMove);
 
-  validKnightMove = isValidKnightMove(Position(0, 0), Position(-1, -2), 3);
-  if (!validKnightMove) {
-    cout << "testInvalidKnightMoveOutOfBoard() Success" << endl;
-  }
+  // Testing isValidKnightMove (valid knight jump is off the board)
+  validKnightMove = testBoard.isValidKnightMove(Position(0, 0), Position(-1, -2));
+  assert(!validKnightMove);
 
   // Testing getValidMoves
-  vector<Position> validMoves = getValidMoves(Position(0, 0), 3);
+  vector<Position> validMoves = testBoard.getValidMoves(Position(0, 0));
   for (Position move : validMoves) {
     if (!((move.row == 2 && move.col == 1) || (move.row == 1 && move.col == 2))) {
       cout << "testGetValidMoves Failure" << endl;
@@ -609,17 +449,17 @@ int main() {
   }
 
   // Testing createAdjacencyList
-  vector<vector<int>> adjacencyList = createAdjacencyList(8);
-  for (int nodeId = 0; nodeId < 8*8; nodeId++) {
+  vector<vector<Position>> adjacencyList = testBoard.getAdjacencyList();
+  for (int nodeId = 0; nodeId < 8 * 8; nodeId++) {
     cout << nodeId << ": ";
-    vector<int> node = adjacencyList.at(nodeId);
-    for (int id : node) {
-      cout << id << " ";
+    vector<Position> node = adjacencyList.at(nodeId);
+    for (Position position : node) {
+      cout << testBoard.idFromPosition(position) << " ";
     }
     cout << endl;
   }
 
-  printBoardId(8);
+  testBoard.printBoardId();
 
   // Testing isValidSequence
   vector<Position> sequence;
@@ -627,9 +467,7 @@ int main() {
   sequence.push_back(Position(4, 2));
   sequence.push_back(Position(6, 4));
   sequence.push_back(Position(4, 5));
-  if (isValidSequence(sequence, 8)) {
-    cout << "testIsValidSequence() Failure" << endl;
-  }
+  assert(!testBoard.isValidSequence(sequence));
 
   sequence.clear();
   sequence.push_back(Position(2, 1));
@@ -639,76 +477,56 @@ int main() {
   sequence.push_back(Position(4, 7));
   sequence.push_back(Position(2, 6));
   sequence.push_back(Position(4, 5));
-  if (isValidSequence(sequence, 8)) {
-    cout << "testIsValidSequence() Success" << endl;
-  }
+  assert(testBoard.isValidSequence(sequence));
 
-  isValidSequence(breadthFirstSearch(17, 37, 8), 8);
-  isValidSequence(breadthFirstSearch(0, 8, 3), 3);
+  // Level 3
+  testBoard.isValidSequence(testBoard.dijkstra(17, 37));
 
-  Board board = Board("boardBarrierTest.txt");
-  board.printBoard(Position(2, 2), Position(10, 10), Position(10, 10));
+  Board board = Board("lvl4BoardTest.txt");
+  validMoves = board.getValidMoves(2, 2);
 
-  printBoardId(5);
-
-  // cout << "Valid Moves:" << endl;
-  // for (Position position: board.getValidMoves(Position(2, 2))) {
-  //   board.printBoard(Position(2, 2), Position(10, 10), position);
-  // }
+  cout << validMoves.size() << endl;
+  assert(validMoves.size() == 5);
+  // Valid Knight Jumps
+  assert(find(validMoves.begin(), validMoves.end(), Position(1, 0)) != validMoves.end());
+  assert(find(validMoves.begin(), validMoves.end(), Position(0, 1)) != validMoves.end());
+  assert(find(validMoves.begin(), validMoves.end(), Position(3, 0)) != validMoves.end());
+  // Valid Teleport Positions
+  assert(find(validMoves.begin(), validMoves.end(), Position(4, 0)) != validMoves.end());
+  assert(find(validMoves.begin(), validMoves.end(), Position(1, 4)) != validMoves.end());
 
   board = Board("boardTeleTest.txt");
 
-  // Testing getAdjacencyList
-  // vector<vector<Position>> adjacencyList2 = board.getAdjacencyList();
-  // for (int nodeId = 0; nodeId < board.size() * board.size(); nodeId++) {
-  //   cout << nodeId << ": ";
-  //   vector<Position> node = adjacencyList2.at(nodeId);
-  //   for (Position position : node) {
-  //     cout << board.idFromPosition(position) << "(" << position.weight << ") ";
-  //   }
-  //   cout << endl;
-  // }
+  // Testing getAdjacencyList w/ weights on complex board
+  board = Board("testAdjacencyListBoard.txt");
+  adjacencyList = board.getAdjacencyList();
+  assert(adjacencyList[0].size() == 0);
+  assert(adjacencyList[1].size() == 1);
+  assert(adjacencyList[1][0] == Position(2, 2));
+  assert(adjacencyList[1][0].weight == 2);
+  assert(adjacencyList[2].size() == 2);
+  assert(adjacencyList[2][0] == Position(2, 1));
+  assert(adjacencyList[2][0].weight == 4);
+  assert(adjacencyList[2][1] == Position(1, 0));
+  assert(adjacencyList[2][1].weight == 1);
+  assert(adjacencyList[3].size() == 2);
+  assert(adjacencyList[3][0] == Position(2, 2));
+  assert(adjacencyList[3][0].weight == 2);
+  assert(adjacencyList[3][1] == Position(1, 1));
+  assert(adjacencyList[3][1].weight == 1);
+  assert(adjacencyList[4].size() == 0);
+  assert(adjacencyList[5].size() == 0);
+  assert(adjacencyList[6].size() == 0);
+  assert(adjacencyList[7].size() == 1);
+  assert(adjacencyList[7][0] == Position(1, 1));
+  assert(adjacencyList[7][0].weight == 1);
+  assert(adjacencyList[8].size() == 1);
+  assert(adjacencyList[8][0] == Position(0, 1));
+  assert(adjacencyList[8][0].weight == 1);
 
   board.printBoard(Position(-1, -1), Position(-1, -1), Position(-1, -1));
   cout << boolalpha << board.isValidSequence(board.dijkstra(0, 99)) << endl;
 
-  // board = Board("board.txt");
-  // cout << boolalpha << board.isValidSequence(board.dijkstra(835, 13)) << endl;
-
-  // priority_queue<Sequence> queue;
-
-  //
-  // Sequence sequence2;
-  // sequence2.add(Position(2, 1, 'L'));
-  // sequence2.add(Position(4, 2, 'L'));
-  //
-  // Sequence sequence1;
-  // sequence1.add(Position(2, 1, '.'));
-  // sequence1.add(Position(4, 2, '.'));
-  // sequence1.add(Position(6, 3, '.'));
-  // queue.push(sequence1);
-  // sequence1.add(Position(5, 5, '.'));
-  // sequence1.add(Position(4, 7, '.'));
-  // sequence1.add(Position(2, 6, '.'));
-  // sequence1.add(Position(4, 5, '.'));
-  // queue.push(sequence1);
-  // queue.push(sequence2);
-
-  // cout << queue.top().weight << endl;
-  // queue.pop();
-  // cout << queue.top().weight << endl;
-  //
-  // cout << boolalpha << board.isValidSequence(sequence1) << endl;
-  // cout << sequence1.weight << endl;
-
-  // queue.push(Position(1, 1, '.'));
-  // queue.push(Position(2, 2, 'L'));
-  // queue.push(Position(1, 2, '.'));
-  //
-  // cout << queue.top().row << ", " << queue.top().col << endl;
-  // queue.pop();
-  // cout << queue.top().row << ", " << queue.top().col << endl;
-  // queue.pop();
-  // cout << queue.top().row << ", " << queue.top().col << endl;
-
+  board = Board("board.txt");
+  cout << boolalpha << board.isValidSequence(board.dijkstra(13, 835)) << endl;
 }
