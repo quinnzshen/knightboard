@@ -525,8 +525,8 @@ int main() {
   assert(adjacencyList[8][0].weight == 1);
 
   board.printBoard(Position(-1, -1), Position(-1, -1), Position(-1, -1));
-  cout << boolalpha << board.isValidSequence(board.dijkstra(0, 99)) << endl;
+  board.isValidSequence(board.dijkstra(0, 99));
 
   board = Board("board.txt");
-  cout << boolalpha << board.isValidSequence(board.dijkstra(13, 835)) << endl;
+  board.isValidSequence(board.dijkstra(13, 856));
 }
