@@ -1,16 +1,13 @@
 #include <iostream>
 #include <algorithm>
 #include <vector>
-#include <queue>
 #include <iomanip>
 #include <fstream>
 #include <set>
 #include <cassert>
-#include <limits>
 using namespace std;
 
 enum Type { WATER, ROCK, BARRIER, TELEPORT, LAVA, NORMAL };
-const int MAX_WEIGHT = numeric_limits<int>::max();
 
 struct Position {
   int row, col, weight;
@@ -26,6 +23,7 @@ struct Position {
   friend bool operator<(Position pos1, Position pos2);
 };
 
+const int MAX_WEIGHT = numeric_limits<int>::max();
 const Position POSITION_BEGIN = Position(-1, -1, 0);
 
 struct Move {
