@@ -374,56 +374,54 @@ void Board::printBoardId() {
 }
 
 int main() {
-  Board testBoard = Board("boards/lvl3Board.txt");
+  Board board = Board("boards/lvl3Board.txt");
 
   // Testing positionFromId
-  Position position = testBoard.positionFromId(4);
+  Position position = board.positionFromId(4);
   assert(position.row == 0 && position.col == 4);
 
   // Testing idFromPosition
-  int id = testBoard.idFromPosition(Position(1, 1));
+  int id = board.idFromPosition(Position(1, 1));
   assert(id == 9);
 
   // Testing isValidPosition
-  bool validPosition = testBoard.isValidPosition(1, 1);
+  bool validPosition = board.isValidPosition(1, 1);
   assert(validPosition);
 
   // Testing isValidPosition (out of board)
-  validPosition = testBoard.isValidPosition(9, 1);
+  validPosition = board.isValidPosition(9, 1);
   assert(!validPosition);
 
   // Testing isValidKnightMove
-  bool validKnightMove = testBoard.isValidKnightMove(Position(0, 0), Position(1, 2));
+  bool validKnightMove = board.isValidKnightMove(Position(0, 0), Position(1, 2));
   assert(validKnightMove);
 
   // Testing isValidKnightMove (invalid knight jump)
-  validKnightMove = testBoard.isValidKnightMove(Position(0, 0), Position(1, 1));
+  validKnightMove = board.isValidKnightMove(Position(0, 0), Position(1, 1));
   assert(!validKnightMove);
 
   // Testing isValidKnightMove (valid knight jump is off the board)
-  validKnightMove = testBoard.isValidKnightMove(Position(0, 0), Position(-1, -2));
+  validKnightMove = board.isValidKnightMove(Position(0, 0), Position(-1, -2));
   assert(!validKnightMove);
 
   // Testing getValidMoves
-  vector<Position> validMoves = testBoard.getValidMoves(Position(0, 0));
+  vector<Position> validMoves = board.getValidMoves(Position(0, 0));
   for (Position move : validMoves) {
-    if (!((move.row == 2 && move.col == 1) || (move.row == 1 && move.col == 2))) {
-      cout << "testGetValidMoves Failure" << endl;
-    }
+    assert((move.row == 2 && move.col == 1) || (move.row == 1 && move.col == 2));
   }
 
   // Testing createAdjacencyList
-  vector<vector<Position>> adjacencyList = testBoard.getAdjacencyList();
+  vector<vector<Position>> adjacencyList = board.getAdjacencyList();
   for (int nodeId = 0; nodeId < 8 * 8; nodeId++) {
     cout << nodeId << ": ";
     vector<Position> node = adjacencyList.at(nodeId);
     for (Position position : node) {
-      cout << testBoard.idFromPosition(position) << " ";
+      cout << board.idFromPosition(position) << " ";
     }
     cout << endl;
   }
 
-  testBoard.printBoardId();
+  board.printBoardId();
 
   // Testing isValidSequence
   vector<Position> sequence;
@@ -431,7 +429,7 @@ int main() {
   sequence.push_back(Position(4, 2));
   sequence.push_back(Position(6, 4));
   sequence.push_back(Position(4, 5));
-  assert(!testBoard.isValidSequence(sequence));
+  assert(!board.isValidSequence(sequence));
 
   sequence.clear();
   sequence.push_back(Position(2, 1));
@@ -441,12 +439,12 @@ int main() {
   sequence.push_back(Position(4, 7));
   sequence.push_back(Position(2, 6));
   sequence.push_back(Position(4, 5));
-  assert(testBoard.isValidSequence(sequence));
+  assert(board.isValidSequence(sequence));
 
   // Level 3
-  testBoard.isValidSequence(testBoard.dijkstra(17, 37));
+  board.isValidSequence(board.dijkstra(17, 37));
 
-  Board board = Board("boards/lvl4BoardTest.txt");
+  board = Board("boards/lvl4BoardTest.txt");
   validMoves = board.getValidMoves(2, 2);
 
   cout << validMoves.size() << endl;
