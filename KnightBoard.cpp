@@ -1,8 +1,6 @@
 //============================================================================
 // Name        : KnightBoard.cpp
 // Author      : Quinn Z Shen
-// Version     :
-// Copyright   :
 // Description : Hello World in C++, Ansi-style
 //============================================================================
 
