@@ -1,3 +1,6 @@
+#ifndef BOARD_H
+#define BOARD_H
+
 #include <iostream>
 #include <algorithm>
 #include <vector>
@@ -63,3 +66,5 @@ public:
   void printBoard(Position startingPosition, Position endingPosition, Position currentPosition);
   void printBoardId();
 };
+
+#endif

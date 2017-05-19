@@ -434,7 +434,6 @@ int main() {
   board = Board("boards/lvl4BoardTest.txt");
   validMoves = board.getValidMoves(2, 2);
 
-  cout << validMoves.size() << endl;
   assert(validMoves.size() == 5);
   // Valid Knight Jumps
   assert(find(validMoves.begin(), validMoves.end(), Position(1, 0)) != validMoves.end());
