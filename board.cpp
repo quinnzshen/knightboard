@@ -410,19 +410,6 @@ int main() {
     assert((move.row == 2 && move.col == 1) || (move.row == 1 && move.col == 2));
   }
 
-  // Testing createAdjacencyList
-  vector<vector<Position>> adjacencyList = board.getAdjacencyList();
-  for (int nodeId = 0; nodeId < 8 * 8; nodeId++) {
-    cout << nodeId << ": ";
-    vector<Position> node = adjacencyList.at(nodeId);
-    for (Position position : node) {
-      cout << board.idFromPosition(position) << " ";
-    }
-    cout << endl;
-  }
-
-  board.printBoardId();
-
   // Testing isValidSequence
   vector<Position> sequence;
   sequence.push_back(Position(2, 1));
@@ -461,7 +448,7 @@ int main() {
 
   // Testing getAdjacencyList w/ weights on complex board
   board = Board("boards/testAdjacencyListBoard.txt");
-  adjacencyList = board.getAdjacencyList();
+  vector<vector<Position>> adjacencyList = board.getAdjacencyList();
   assert(adjacencyList[0].size() == 0);
   assert(adjacencyList[1].size() == 1);
   assert(adjacencyList[1][0] == Position(2, 2));
