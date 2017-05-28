@@ -108,6 +108,29 @@ bool Board::isValidTeleport(Position start, Position end) {
   return find(potentialPositions.begin(), potentialPositions.end(), end) != potentialPositions.end();
 }
 
+bool Board::isValidSequence(Moves path) {
+  if (path.moves.empty()) {
+    return true;
+  }
+
+  for (int move = 0; move < (path.moves.size() - 1); move++) {
+    Position currentPosition = path.moves[move];
+    Position nextPosition = path.moves[move + 1];
+
+    if (!isValidKnightMove(currentPosition, nextPosition) && !isValidTeleport(currentPosition, nextPosition)) {
+      return false;
+    }
+  }
+
+  for (int move = 0; move < path.moves.size(); move++) {
+    printBoard(path.moves[0], path.moves[path.moves.size() - 1], path.moves[move]);
+  }
+
+  printBoard(path.moves[0], path.moves[path.moves.size() - 1], path);
+
+  return true;
+}
+
 bool Board::isValidSequence(vector<Position> sequence) {
   if (sequence.empty()) {
     return true;
@@ -118,7 +141,6 @@ bool Board::isValidSequence(vector<Position> sequence) {
     Position nextPosition = sequence[move + 1];
 
     cout << "Checking validity of: " << currentPosition.row << ", " << currentPosition.col << endl;
-
 
     if (!isValidKnightMove(currentPosition, nextPosition) && !isValidTeleport(currentPosition, nextPosition)) {
       cout << "Failed validity." << endl;
@@ -146,8 +168,8 @@ vector<Position> Board::getValidMoves(Position position) {
   }
 
   vector<pair<int, int>> deltas = {
-    make_pair(2, -1), make_pair(2, 1), make_pair(-2, -1), make_pair(-2, 1),
-    make_pair(1, 2), make_pair(1, -2), make_pair(-1, 2), make_pair(-1, -2)
+    make_pair(2, -1), make_pair(1, -2), make_pair(-1, -2), make_pair(-2, -1),
+    make_pair(-2, 1), make_pair(-1, 2), make_pair(1, 2), make_pair(2, 1)
   };
 
   // Ensure that our attempted move doesn't land on a barrier/rock or out of bounds
@@ -262,17 +284,20 @@ Moves Board::longestPath(int startId, int goalId) {
   stack<Moves> stack;
   Moves solution;
   int longestPathWeight = -1;
+  int count = 0;
 
   stack.push(Moves(positionFromId(startId), startId));
 
   while (!stack.empty()) {
+    count++;
     Moves currentPath = stack.top();
     stack.pop();
 
     Position currentPosition = currentPath.moves.back();
     int currentId = idFromPosition(currentPosition);
 
-    // this_thread::sleep_for (chrono::seconds(1));
+    printBoard(positionFromId(startId), positionFromId(goalId), currentPath);
+    this_thread::sleep_for (chrono::milliseconds(100));
 
     // cout << "Currently at: " << currentPosition.row << ", " << currentPosition.col << " [" << currentPath.totalWeight << "]" << endl;
     // cout << stack.size() << endl;
@@ -281,11 +306,16 @@ Moves Board::longestPath(int startId, int goalId) {
       if (currentPath.totalWeight > longestPathWeight) {
         longestPathWeight = currentPath.totalWeight;
         solution = currentPath;
-        isValidSequence(currentPath.moves);
+        isValidSequence(currentPath);
         cout << "Found a solution: " << longestPathWeight << endl;
       }
     } else {
-      for (Position explorePosition : adjacencyList[currentId]) {
+      vector<Position> explorePositions = adjacencyList[currentId];
+
+      // Randomly shuffle the explore positions
+      rotate(explorePositions.begin(), explorePositions.begin() + (count % explorePositions.size()), explorePositions.end());
+
+      for (Position explorePosition : explorePositions) {
         // Check if we can still reach current location from our goal
         Moves explorePath = currentPath;
         // cout << "Exploring: " << explorePosition.row << ", " << explorePosition.col << " [" << explorePath.totalWeight << "]" << " (" << explorePath.visited.size() << ")" << endl;
@@ -320,6 +350,7 @@ Moves Board::longestPath(int startId, int goalId) {
 void Board::printBoard(Position startingPosition, Position endingPosition, Moves path) {
   Position currentPosition = path.moves.empty() ? POSITION_BEGIN : path.moves.back();
 
+  cout << "Board[" << path.totalWeight << "]:" << endl;
   for (vector<Position> row : board) {
     for (Position tile : row) {
       if ((startingPosition == currentPosition || endingPosition == currentPosition) && tile == currentPosition) {

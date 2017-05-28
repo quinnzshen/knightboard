@@ -63,6 +63,7 @@ public:
   bool isBarrierBlocking(Position start, Position end);
   bool isValidKnightMove(Position start, Position end);
   bool isValidTeleport(Position start, Position end);
+  bool isValidSequence(Moves path);
   bool isValidSequence(vector<Position> sequence);
 
   vector<Position> getValidMoves(int row, int col);
