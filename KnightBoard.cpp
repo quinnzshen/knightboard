@@ -11,6 +11,7 @@
 #include <iomanip>
 #include <fstream>
 #include <set>
+#include <stack>
 #include <cassert>
 using namespace std;
 
@@ -99,6 +100,28 @@ struct Move {
 
   friend bool operator<(Move move1, Move move2) {
     return move1.totalWeight > move2.totalWeight;
+  }
+};
+
+struct Moves {
+  vector<Position> moves;
+  set<Position> visited;
+  int totalWeight;
+
+  Moves(Position position) {
+    moves.push_back(position);
+    totalWeight = position.weight;
+    visited.insert(position);
+  }
+
+  bool newMove(Position position) {
+    if (visited.find(position) != visited.end()) {
+      moves.push_back(position);
+      totalWeight += position.weight;
+      visited.insert(position);
+      return true;
+    }
+    return false;
   }
 };
 
@@ -363,6 +386,40 @@ class Board {
 
     cout << "No sequence found" << endl;
     return vector<Position>();
+  }
+
+  Moves longestPath(int startId, int goalId) {
+    vector<vector<Position>> adjacencyList = getAdjacencyList();
+    Moves solution;
+    stack<Moves> stack;
+    int longestPathWeight = -1;
+
+    stack.push(Moves(positionFromId(startId)));
+
+    while (!stack.empty()) {
+      Moves currentPath = stack.top();
+      int currentId = idFromPosition(currentPath.moves.back());
+
+      for (Position explorePosition : adjacencyList[currentId]) {
+        Moves explorePath = currentPath;
+        if (explorePath.newMove(explorePosition)) {
+          if (explorePosition == positionFromId(goalId)) {
+            if (explorePath.totalWeight > longestPathWeight) {
+              longestPathWeight = explorePath.totalWeight;
+              solution = explorePath;
+            }
+          } else {
+            stack.push(explorePath);
+          }
+        }
+      }
+    }
+
+    if (longestPathWeight == -1) {
+      cout << "Couldn't find a path." << endl;
+    }
+
+    return solution;
   }
 
   bool isValidTeleport(Position start, Position end) {

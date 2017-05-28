@@ -1,49 +1,57 @@
 #ifndef BOARD_H
 #define BOARD_H
 
+#include "position.h"
+#include "move.h"
 #include <iostream>
 #include <algorithm>
 #include <vector>
 #include <iomanip>
 #include <fstream>
-#include <set>
+#include <unordered_set>
 #include <cassert>
 using namespace std;
 
-enum Type { WATER, ROCK, BARRIER, TELEPORT, LAVA, NORMAL };
-
-struct Position {
-  int row, col, weight;
-  Type type;
-
-  Position(int row, int col, int weight);
-  Position(int row, int col, char ch = '.');
-
-  bool isBarrier();
-
-  friend bool operator==(Position pos1, Position pos2);
-  friend bool operator!=(Position pos1, Position pos2);
-  friend bool operator<(Position pos1, Position pos2);
-};
-
-const int MAX_WEIGHT = numeric_limits<int>::max();
-const Position POSITION_BEGIN = Position(-1, -1, 0);
-
-struct Move {
-  Position position = POSITION_BEGIN;
-  Position parentPosition = POSITION_BEGIN;
+struct Moves {
+  vector<Position> moves;
+  unordered_set<int> visited;
   int totalWeight;
 
-  Move(Position current, Position parent, int weight);
-  Move newMove(Position newPosition);
+  Moves() {
+    totalWeight = 0;
+  }
 
-  friend bool operator==(Move move1, Move move2);
-  friend bool operator<(Move move1, Move move2);
+  Moves(Position position, int positionId) {
+    moves.push_back(position);
+    visited.insert(positionId);
+    totalWeight = position.weight;
+  }
+
+  bool newMove(Position position, int positionId) {
+    // for (auto elem : visited) {
+    //   cout << elem << " ";
+    // }
+    // cout << "!" << endl;
+
+    if (visited.find(positionId) != visited.end()) {
+      return false;
+    }
+
+    moves.push_back(position);
+    visited.insert(positionId);
+    totalWeight += position.weight;
+
+    return true;
+  }
+
+  friend bool operator<(Moves moves1, Moves moves2) {
+    return moves1.totalWeight > moves2.totalWeight;
+  }
 };
 
 class Board {
   vector<vector<Position>> board;
-  set<int> teleportPositionIds;
+  unordered_set<int> teleportPositionIds;
 public:
   Board(string fileName);
   int size();
@@ -61,8 +69,10 @@ public:
   vector<Position> getValidMoves(Position position);
 
   vector<vector<Position>> getAdjacencyList();
-  vector<Position> dijkstra(int startId, int goalId);
+  vector<Position> dijkstra(int startId, int goalId, unordered_set<int> visited = unordered_set<int>());
+  Moves longestPath(int startId, int goalId);
 
+  void printBoard(Position startingPosition, Position endingPosition, Moves path);
   void printBoard(Position startingPosition, Position endingPosition, Position currentPosition);
   void printBoardId();
 };

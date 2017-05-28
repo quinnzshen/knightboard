@@ -1,77 +1,8 @@
 #include "board.h"
+#include <stack>
+#include <thread>
+#include <chrono>
 using namespace std;
-
-Position::Position(int row, int col, int weight) {
-  this->row = row;
-  this->col = col;
-  this->weight = weight;
-}
-
-Position::Position(int row, int col, char ch) {
-  this->row = row;
-  this->col = col;
-
-  switch(ch) {
-    case 'W':
-      type = WATER;
-      weight = 2;
-      break;
-    case 'R':
-      type = ROCK;
-      weight = MAX_WEIGHT;
-      break;
-    case 'B':
-      type = BARRIER;
-      weight = MAX_WEIGHT;
-      break;
-    case 'T':
-      type = TELEPORT;
-      weight = 1;
-      break;
-    case 'L':
-      type = LAVA;
-      weight = 4;
-      break;
-    default:
-      type = NORMAL;
-      weight = 1;
-      break;
-  }
-}
-
-bool Position::isBarrier() {
-  return type == BARRIER;
-}
-
-bool operator==(Position pos1, Position pos2) {
-  return (pos1.row == pos2.row) && (pos1.col == pos2.col);
-}
-
-bool operator!=(Position pos1, Position pos2) {
-  return (pos1.row != pos2.row) || (pos1.col != pos2.col);
-}
-
-bool operator<(Position pos1, Position pos2) {
-  return pos1.weight > pos2.weight;
-}
-
-Move::Move(Position current, Position parent, int weight) {
-  position = current;
-  parentPosition = parent;
-  totalWeight = weight;
-}
-
-Move Move::newMove(Position newPosition) {
-  return Move(newPosition, position, totalWeight + newPosition.weight);
-}
-
-bool operator==(Move move1, Move move2) {
-  return move1.position == move2.position;
-}
-
-bool operator<(Move move1, Move move2) {
-  return move1.totalWeight > move2.totalWeight;
-}
 
 Board::Board(string fileName) {
   char ch;
@@ -263,7 +194,7 @@ vector<vector<Position>> Board::getAdjacencyList() {
   return adjacencyList;
 }
 
-vector<Position> Board::dijkstra(int startId, int goalId) {
+vector<Position> Board::dijkstra(int startId, int goalId, unordered_set<int> visited) {
   vector<vector<Position>> adjacencyList = getAdjacencyList();
   vector<vector<Move>> boardMoves (board.size(), vector<Move> (board.size(), Move(POSITION_BEGIN, POSITION_BEGIN, MAX_WEIGHT)));
   vector<Move> priorityQueue;
@@ -277,7 +208,7 @@ vector<Position> Board::dijkstra(int startId, int goalId) {
 
   while (!priorityQueue.empty()) {
     Move currentMove = priorityQueue.front();
-    cout << "exploring position: " << currentMove.position.row << ", " << currentMove.position.col << " [" << currentMove.totalWeight << "]" << endl;
+    // cout << "exploring position: " << currentMove.position.row << ", " << currentMove.position.col << " [" << currentMove.totalWeight << "]" << endl;
 
     pop_heap(priorityQueue.begin(), priorityQueue.end());
     priorityQueue.pop_back();
@@ -285,6 +216,10 @@ vector<Position> Board::dijkstra(int startId, int goalId) {
     int currentMoveId = idFromPosition(currentMove.position);
 
     for (Position newPosition : adjacencyList.at(currentMoveId)) {
+      if (visited.find(idFromPosition(newPosition)) != visited.end()) {
+        continue;
+      }
+
       Move newMove = currentMove.newMove(newPosition);
       int newPositionId = idFromPosition(newPosition);
 
@@ -307,10 +242,10 @@ vector<Position> Board::dijkstra(int startId, int goalId) {
         Position backtrack = newPosition;
 
         while (backtrack != POSITION_BEGIN) {
-          cout << "backtrack: " << backtrack.row << ", " << backtrack.col << endl;
+          // cout << "backtrack: " << backtrack.row << ", " << backtrack.col << endl;
           sequence.insert(sequence.begin(), backtrack);
           backtrack = boardMoves[backtrack.row][backtrack.col].parentPosition;
-          cout << "backtrack: " << backtrack.row << ", " << backtrack.col << endl;
+          // cout << "backtrack: " << backtrack.row << ", " << backtrack.col << endl;
         }
 
         return sequence;
@@ -318,8 +253,111 @@ vector<Position> Board::dijkstra(int startId, int goalId) {
     }
   }
 
-  cout << "No sequence found" << endl;
+  // cout << "No sequence found" << endl;
   return vector<Position>();
+}
+
+Moves Board::longestPath(int startId, int goalId) {
+  vector<vector<Position>> adjacencyList = getAdjacencyList();
+  stack<Moves> stack;
+  Moves solution;
+  int longestPathWeight = -1;
+
+  stack.push(Moves(positionFromId(startId), startId));
+
+  while (!stack.empty()) {
+    Moves currentPath = stack.top();
+    stack.pop();
+
+    Position currentPosition = currentPath.moves.back();
+    int currentId = idFromPosition(currentPosition);
+
+    // this_thread::sleep_for (chrono::seconds(1));
+
+    // cout << "Currently at: " << currentPosition.row << ", " << currentPosition.col << " [" << currentPath.totalWeight << "]" << endl;
+    // cout << stack.size() << endl;
+
+    if (currentPosition == positionFromId(goalId)) {
+      if (currentPath.totalWeight > longestPathWeight) {
+        longestPathWeight = currentPath.totalWeight;
+        solution = currentPath;
+        isValidSequence(currentPath.moves);
+        cout << "Found a solution: " << longestPathWeight << endl;
+      }
+    } else {
+      for (Position explorePosition : adjacencyList[currentId]) {
+        // Check if we can still reach current location from our goal
+        Moves explorePath = currentPath;
+        // cout << "Exploring: " << explorePosition.row << ", " << explorePosition.col << " [" << explorePath.totalWeight << "]" << " (" << explorePath.visited.size() << ")" << endl;
+
+        if (explorePath.newMove(explorePosition, idFromPosition(explorePosition))) {
+          // cout << "visited: [ ";
+          // for (int x : currentPath.visited) {
+          //   cout << x << " ";
+          // }
+          // cout << "]" << endl;
+
+          if (dijkstra(goalId, idFromPosition(explorePosition), currentPath.visited).size() == 0 && (goalId != idFromPosition(explorePosition))) {
+            // cout << "Can't reach goal, not adding." << endl;
+            // cout << "uhh" << endl;
+            continue;
+          }
+
+          // cout << "Adding to stack: " << explorePosition.row << ", " << explorePosition.col << " [" << explorePath.totalWeight << "]" << endl;
+          stack.push(explorePath);
+        }
+      }
+    }
+  }
+
+  if (longestPathWeight == -1) {
+    cout << "Couldn't find a path." << endl;
+  }
+
+  return solution;
+}
+
+void Board::printBoard(Position startingPosition, Position endingPosition, Moves path) {
+  Position currentPosition = path.moves.empty() ? POSITION_BEGIN : path.moves.back();
+
+  for (vector<Position> row : board) {
+    for (Position tile : row) {
+      if ((startingPosition == currentPosition || endingPosition == currentPosition) && tile == currentPosition) {
+        cout << "* ";
+      } else if (tile == startingPosition) {
+        cout << "S ";
+      } else if (tile == endingPosition) {
+        cout << "E ";
+      } else if (tile == currentPosition) {
+        cout << "K ";
+      } else if (path.visited.find(idFromPosition(tile)) != path.visited.end()) {
+        cout << "# ";
+      } else {
+        switch(tile.type) {
+          case WATER:
+            cout << "W ";
+            break;
+          case ROCK:
+            cout << "R ";
+            break;
+          case BARRIER:
+            cout << "B ";
+            break;
+          case TELEPORT:
+            cout << "T ";
+            break;
+          case LAVA:
+            cout << "L ";
+            break;
+          default:
+            cout << ". ";
+            break;
+        }
+      }
+
+    }
+    cout << endl;
+  }
 }
 
 void Board::printBoard(Position startingPosition, Position endingPosition, Position currentPosition) {
@@ -371,110 +409,4 @@ void Board::printBoardId() {
     }
     cout << endl;
   }
-}
-
-int main() {
-  Board board = Board("boards/lvl3Board.txt");
-
-  // Testing positionFromId
-  Position position = board.positionFromId(4);
-  assert(position.row == 0 && position.col == 4);
-
-  // Testing idFromPosition
-  int id = board.idFromPosition(Position(1, 1));
-  assert(id == 9);
-
-  // Testing isValidPosition
-  bool validPosition = board.isValidPosition(1, 1);
-  assert(validPosition);
-
-  // Testing isValidPosition (out of board)
-  validPosition = board.isValidPosition(9, 1);
-  assert(!validPosition);
-
-  // Testing isValidKnightMove
-  bool validKnightMove = board.isValidKnightMove(Position(0, 0), Position(1, 2));
-  assert(validKnightMove);
-
-  // Testing isValidKnightMove (invalid knight jump)
-  validKnightMove = board.isValidKnightMove(Position(0, 0), Position(1, 1));
-  assert(!validKnightMove);
-
-  // Testing isValidKnightMove (valid knight jump is off the board)
-  validKnightMove = board.isValidKnightMove(Position(0, 0), Position(-1, -2));
-  assert(!validKnightMove);
-
-  // Testing getValidMoves
-  vector<Position> validMoves = board.getValidMoves(Position(0, 0));
-  for (Position move : validMoves) {
-    assert((move.row == 2 && move.col == 1) || (move.row == 1 && move.col == 2));
-  }
-
-  // Testing isValidSequence
-  vector<Position> sequence;
-  sequence.push_back(Position(2, 1));
-  sequence.push_back(Position(4, 2));
-  sequence.push_back(Position(6, 4));
-  sequence.push_back(Position(4, 5));
-  assert(!board.isValidSequence(sequence));
-
-  sequence.clear();
-  sequence.push_back(Position(2, 1));
-  sequence.push_back(Position(4, 2));
-  sequence.push_back(Position(6, 3));
-  sequence.push_back(Position(5, 5));
-  sequence.push_back(Position(4, 7));
-  sequence.push_back(Position(2, 6));
-  sequence.push_back(Position(4, 5));
-  assert(board.isValidSequence(sequence));
-
-  // Level 3
-  board.isValidSequence(board.dijkstra(17, 37));
-
-  board = Board("boards/lvl4BoardTest.txt");
-  validMoves = board.getValidMoves(2, 2);
-
-  assert(validMoves.size() == 5);
-  // Valid Knight Jumps
-  assert(find(validMoves.begin(), validMoves.end(), Position(1, 0)) != validMoves.end());
-  assert(find(validMoves.begin(), validMoves.end(), Position(0, 1)) != validMoves.end());
-  assert(find(validMoves.begin(), validMoves.end(), Position(3, 0)) != validMoves.end());
-  // Valid Teleport Positions
-  assert(find(validMoves.begin(), validMoves.end(), Position(4, 0)) != validMoves.end());
-  assert(find(validMoves.begin(), validMoves.end(), Position(1, 4)) != validMoves.end());
-
-  board = Board("boards/boardTeleTest.txt");
-
-  // Testing getAdjacencyList w/ weights on complex board
-  board = Board("boards/testAdjacencyListBoard.txt");
-  vector<vector<Position>> adjacencyList = board.getAdjacencyList();
-  assert(adjacencyList[0].size() == 0);
-  assert(adjacencyList[1].size() == 1);
-  assert(adjacencyList[1][0] == Position(2, 2));
-  assert(adjacencyList[1][0].weight == 2);
-  assert(adjacencyList[2].size() == 2);
-  assert(adjacencyList[2][0] == Position(2, 1));
-  assert(adjacencyList[2][0].weight == 4);
-  assert(adjacencyList[2][1] == Position(1, 0));
-  assert(adjacencyList[2][1].weight == 1);
-  assert(adjacencyList[3].size() == 2);
-  assert(adjacencyList[3][0] == Position(2, 2));
-  assert(adjacencyList[3][0].weight == 2);
-  assert(adjacencyList[3][1] == Position(1, 1));
-  assert(adjacencyList[3][1].weight == 1);
-  assert(adjacencyList[4].size() == 0);
-  assert(adjacencyList[5].size() == 0);
-  assert(adjacencyList[6].size() == 0);
-  assert(adjacencyList[7].size() == 1);
-  assert(adjacencyList[7][0] == Position(1, 1));
-  assert(adjacencyList[7][0].weight == 1);
-  assert(adjacencyList[8].size() == 1);
-  assert(adjacencyList[8][0] == Position(0, 1));
-  assert(adjacencyList[8][0].weight == 1);
-
-  board.printBoard(Position(-1, -1), Position(-1, -1), Position(-1, -1));
-  board.isValidSequence(board.dijkstra(0, 99));
-
-  board = Board("boards/board.txt");
-  board.isValidSequence(board.dijkstra(13, 856));
 }
