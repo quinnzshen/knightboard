@@ -11,6 +11,38 @@ clang++ -std=c++1z -stdlib=libc++ position.cpp move.cpp priority_queue.cpp path.
 ./test
 ```
 
+Modify the main.cpp as you wish (Note: settings the `DEFAULT_SLEEP_MS` parameter below 0ms will result in no sleep or printing of intermediate board steps / explorations).
+
+The first two parameters for board.dijkstra and board.longestPath is `(startId, goalId)`.
+```c++
+#include "board.h"
+using namespace std;
+
+const int DEFAULT_EXPLORE_DEPTH = 1200;
+const int DEFAULT_SLEEP_MS = 100;
+
+int main() {
+  // Level 3
+  Board board = Board("boards/lvl3Board.txt");
+  board.isValidSequence(board.dijkstra(17, 37));
+
+  cout << "Completed level 3. Press Enter to Continue:" << endl;
+  cin.ignore();
+
+  // Level 4
+  board = Board("boards/board.txt");
+  board.isValidSequence(board.dijkstra(13, 856));
+
+  cout << "Completed level 4. Press Enter to Continue:" << endl;
+  cin.ignore();
+
+  // Level 5
+  board.isValidSequence(board.longestPath(13, 856, DEFAULT_EXPLORE_DEPTH, DEFAULT_SLEEP_MS));
+
+  cout << "Completed level 5." << endl;
+}
+```
+
 **Level 3**:
 To implement level 3, I began with a simple Breadth First Search (BFS) treating this as an unweighted undirected graph problem. This would give me a valid sequence from a given start point to a given end point in the fewest number of moves.
 
@@ -29,4 +61,4 @@ My final solution tried to gauge the value of a move before exploring it. More s
 priority_within_queue = currentPath.totalWeight + estimatedCostToGoal;
 ```
 
-By creating this heuristic, we were now prioritizing the exploration of paths that would also take us further away from the goal id. This encouraged the Best-First-Search (A\*) to explore as far as possible (exploring all corners of the board) before reaching the goal.
+By creating this heuristic, we were now prioritizing the exploration of paths that would also take us further away from the goal id. This encouraged the Best-First-Search (A\*) to explore as far as possible (exploring all corners of the board) before reaching the goal. The best way to estimate my cost to goal was to utilize my Djikstra's algorithm and determine how many moves (vs. weight) it would take me reach the goal in the current state. 
