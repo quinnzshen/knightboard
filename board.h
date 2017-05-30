@@ -40,7 +40,7 @@ struct Path {
   }
 
   friend bool operator==(Path path1, Path path2) {
-    return path1.totalWeight == path2.totalWeight;
+    return path1.moves.back() == path2.moves.back() && path1.moves.front() == path2.moves.front();
   }
 
   friend bool operator<(Path path1, Path path2) {
@@ -58,7 +58,7 @@ struct Weight {
   }
 
   friend bool operator==(Weight weight1, Weight weight2) {
-    return weight1.estimatedCost == weight2.estimatedCost;
+    return weight1.path == weight2.path;
   }
 
   friend bool operator<(Weight weight1, Weight weight2) {
