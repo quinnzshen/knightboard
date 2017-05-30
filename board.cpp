@@ -127,6 +127,8 @@ bool Board::isValidSequence(Moves path) {
   }
 
   printBoard(path.moves[0], path.moves[path.moves.size() - 1], path);
+  cout << "Total Visited: " << path.visited.size() << endl;
+  cout << "Total Weight: " << path.totalWeight << endl;
 
   return true;
 }
@@ -230,7 +232,6 @@ vector<Position> Board::dijkstra(int startId, int goalId, unordered_set<int> vis
 
   while (!priorityQueue.empty()) {
     Move currentMove = priorityQueue.front();
-    // cout << "exploring position: " << currentMove.position.row << ", " << currentMove.position.col << " [" << currentMove.totalWeight << "]" << endl;
 
     pop_heap(priorityQueue.begin(), priorityQueue.end());
     priorityQueue.pop_back();
@@ -264,10 +265,8 @@ vector<Position> Board::dijkstra(int startId, int goalId, unordered_set<int> vis
         Position backtrack = newPosition;
 
         while (backtrack != POSITION_BEGIN) {
-          // cout << "backtrack: " << backtrack.row << ", " << backtrack.col << endl;
           sequence.insert(sequence.begin(), backtrack);
           backtrack = boardMoves[backtrack.row][backtrack.col].parentPosition;
-          // cout << "backtrack: " << backtrack.row << ", " << backtrack.col << endl;
         }
 
         return sequence;
@@ -275,31 +274,26 @@ vector<Position> Board::dijkstra(int startId, int goalId, unordered_set<int> vis
     }
   }
 
-  // cout << "No sequence found" << endl;
   return vector<Position>();
 }
 
 Moves Board::longestPath(int startId, int goalId) {
   vector<vector<Position>> adjacencyList = getAdjacencyList();
-  // stack<Moves> stack;
   vector<Weight> priorityQueue;
   Moves solution;
   int longestPathWeight = -1;
+  int count = 0;
 
   int estimateCost = dijkstra(startId, goalId).size();
   if (estimateCost == 0 && (goalId != startId)) {
     return solution;
   }
 
-  // stack.push(Moves(positionFromId(startId), startId));
-
   priorityQueue.push_back(Weight(Moves(positionFromId(startId), startId), estimateCost));
   push_heap(priorityQueue.begin(), priorityQueue.end());
 
-  while (!priorityQueue.empty()) {
-    // Moves currentPath = stack.top();
-    // stack.pop();
-
+  while (!priorityQueue.empty() && count < 1200) {
+    count++;
     Moves currentPath = priorityQueue.front().moves;
 
     pop_heap(priorityQueue.begin(), priorityQueue.end());
@@ -308,12 +302,9 @@ Moves Board::longestPath(int startId, int goalId) {
     Position currentPosition = currentPath.moves.back();
     int currentId = idFromPosition(currentPosition);
 
-    // cout << "QUEUE SIZE: " << priorityQueue.size() << endl;
+    cout << "QUEUE SIZE: " << priorityQueue.size() << endl;
     printBoard(positionFromId(startId), positionFromId(goalId), currentPath);
-    this_thread::sleep_for (chrono::milliseconds(50));
-
-    // cout << "Currently at: " << currentPosition.row << ", " << currentPosition.col << " [" << currentPath.totalWeight << "]" << endl;
-    // cout << stack.size() << endl;
+    this_thread::sleep_for (chrono::milliseconds(100));
 
     if (currentPosition == positionFromId(goalId)) {
       if (currentPath.totalWeight > longestPathWeight) {
@@ -329,26 +320,16 @@ Moves Board::longestPath(int startId, int goalId) {
       random_shuffle(explorePositions.begin(), explorePositions.end());
 
       for (Position explorePosition : explorePositions) {
-        // Check if we can still reach current location from our goal
         Moves explorePath = currentPath;
-        // cout << "Exploring: " << explorePosition.row << ", " << explorePosition.col << " [" << explorePath.totalWeight << "]" << " (" << explorePath.visited.size() << ")" << endl;
 
         if (explorePath.newMove(explorePosition, idFromPosition(explorePosition))) {
-          // cout << "visited: [ ";
-          // for (int x : currentPath.visited) {
-          //   cout << x << " ";
-          // }
-          // cout << "]" << endl;
 
+          // We only want to continue exploring a path if there still exists a path to the goal.
           estimateCost = dijkstra(idFromPosition(explorePosition), goalId, currentPath.visited).size();
           if (estimateCost == 0 && (goalId != idFromPosition(explorePosition))) {
-            // cout << "Can't reach goal, not adding." << endl;
-            // cout << "uhh" << endl;
             continue;
           }
 
-          // cout << "Adding to stack: " << explorePosition.row << ", " << explorePosition.col << " [" << explorePath.totalWeight << "]" << endl;
-          // stack.push(explorePath);
           priorityQueue.push_back(Weight(explorePath, estimateCost));
           push_heap(priorityQueue.begin(), priorityQueue.end());
         }

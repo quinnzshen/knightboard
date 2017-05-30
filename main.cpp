@@ -17,5 +17,5 @@ int main() {
   // Level 5
   // board = Board("boards/4x4Board.txt");
   // board = Board("boards/lvl3Board.txt");
-  board.isValidSequence(board.longestPath(411, 1023).moves);
+  board.isValidSequence(board.longestPath(411, 404));
 }
