@@ -45,7 +45,21 @@ struct Moves {
   }
 
   friend bool operator<(Moves moves1, Moves moves2) {
-    return moves1.totalWeight > moves2.totalWeight;
+    return moves1.totalWeight < moves2.totalWeight;
+  }
+};
+
+struct Weight {
+  Moves moves;
+  int estimatedCost;
+
+  Weight(Moves path, int cost) {
+    moves = path;
+    estimatedCost = path.totalWeight + cost;
+  }
+
+  friend bool operator<(Weight weight1, Weight weight2) {
+    return weight1.estimatedCost < weight2.estimatedCost;
   }
 };
 

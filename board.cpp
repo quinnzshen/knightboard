@@ -281,23 +281,36 @@ vector<Position> Board::dijkstra(int startId, int goalId, unordered_set<int> vis
 
 Moves Board::longestPath(int startId, int goalId) {
   vector<vector<Position>> adjacencyList = getAdjacencyList();
-  stack<Moves> stack;
+  // stack<Moves> stack;
+  vector<Weight> priorityQueue;
   Moves solution;
   int longestPathWeight = -1;
-  int count = 0;
 
-  stack.push(Moves(positionFromId(startId), startId));
+  int estimateCost = dijkstra(startId, goalId).size();
+  if (estimateCost == 0 && (goalId != startId)) {
+    return solution;
+  }
 
-  while (!stack.empty()) {
-    count++;
-    Moves currentPath = stack.top();
-    stack.pop();
+  // stack.push(Moves(positionFromId(startId), startId));
+
+  priorityQueue.push_back(Weight(Moves(positionFromId(startId), startId), estimateCost));
+  push_heap(priorityQueue.begin(), priorityQueue.end());
+
+  while (!priorityQueue.empty()) {
+    // Moves currentPath = stack.top();
+    // stack.pop();
+
+    Moves currentPath = priorityQueue.front().moves;
+
+    pop_heap(priorityQueue.begin(), priorityQueue.end());
+    priorityQueue.pop_back();
 
     Position currentPosition = currentPath.moves.back();
     int currentId = idFromPosition(currentPosition);
 
+    // cout << "QUEUE SIZE: " << priorityQueue.size() << endl;
     printBoard(positionFromId(startId), positionFromId(goalId), currentPath);
-    this_thread::sleep_for (chrono::milliseconds(100));
+    this_thread::sleep_for (chrono::milliseconds(50));
 
     // cout << "Currently at: " << currentPosition.row << ", " << currentPosition.col << " [" << currentPath.totalWeight << "]" << endl;
     // cout << stack.size() << endl;
@@ -313,7 +326,7 @@ Moves Board::longestPath(int startId, int goalId) {
       vector<Position> explorePositions = adjacencyList[currentId];
 
       // Randomly shuffle the explore positions
-      rotate(explorePositions.begin(), explorePositions.begin() + (count % explorePositions.size()), explorePositions.end());
+      random_shuffle(explorePositions.begin(), explorePositions.end());
 
       for (Position explorePosition : explorePositions) {
         // Check if we can still reach current location from our goal
@@ -327,14 +340,17 @@ Moves Board::longestPath(int startId, int goalId) {
           // }
           // cout << "]" << endl;
 
-          if (dijkstra(goalId, idFromPosition(explorePosition), currentPath.visited).size() == 0 && (goalId != idFromPosition(explorePosition))) {
+          estimateCost = dijkstra(idFromPosition(explorePosition), goalId, currentPath.visited).size();
+          if (estimateCost == 0 && (goalId != idFromPosition(explorePosition))) {
             // cout << "Can't reach goal, not adding." << endl;
             // cout << "uhh" << endl;
             continue;
           }
 
           // cout << "Adding to stack: " << explorePosition.row << ", " << explorePosition.col << " [" << explorePath.totalWeight << "]" << endl;
-          stack.push(explorePath);
+          // stack.push(explorePath);
+          priorityQueue.push_back(Weight(explorePath, estimateCost));
+          push_heap(priorityQueue.begin(), priorityQueue.end());
         }
       }
     }
@@ -361,7 +377,7 @@ void Board::printBoard(Position startingPosition, Position endingPosition, Moves
         cout << "E ";
       } else if (tile == currentPosition) {
         cout << "K ";
-      } else if (path.visited.find(idFromPosition(tile)) != path.visited.end()) {
+      } else if (path.visited.find(idFromPosition(tile)) != path.visited.end() && tile.type != TELEPORT) {
         cout << "# ";
       } else {
         switch(tile.type) {
