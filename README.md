@@ -14,6 +14,14 @@ clang++ -std=c++1z -stdlib=libc++ position.cpp move.cpp priority_queue.cpp path.
 Modify the main.cpp as you wish (Note: settings the `DEFAULT_SLEEP_MS` parameter below 0ms will result in no sleep or printing of intermediate board steps / explorations).
 
 The first two parameters for board.dijkstra and board.longestPath is `(startId, goalId)`.
+
+Example 3x3 Board:
+```
+0 1 2
+3 4 5
+6 7 8
+```
+
 ```c++
 #include "board.h"
 using namespace std;
