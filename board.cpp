@@ -215,7 +215,7 @@ vector<vector<Position>> Board::getAdjacencyList() {
   return adjacencyList;
 }
 
-vector<Position> Board::dijkstra(int startId, int goalId, unordered_set<int> visited) {
+Path Board::dijkstra(int startId, int goalId, unordered_set<int> visited) {
   vector<vector<Position>> adjacencyList = getAdjacencyList();
   vector<vector<Move>> boardPath (board.size(), vector<Move> (board.size(), Move(POSITION_BEGIN, POSITION_BEGIN, MAX_WEIGHT)));
   PriorityQueue<Move> priorityQueue;
@@ -247,22 +247,25 @@ vector<Position> Board::dijkstra(int startId, int goalId, unordered_set<int> vis
       }
 
       if (newPositionId == goalId) {
-        // Once we've reached the goal, return the move sequence.
-        vector<Position> sequence;
+        // Once we've reached the goal, return the solution path by backtracking.
+        Path solution = Path();
         Position backtrack = newPosition;
 
         while (backtrack != POSITION_BEGIN) {
-          sequence.insert(sequence.begin(), backtrack);
+          solution.newMove(backtrack, idFromPosition(backtrack));
           backtrack = boardPath[backtrack.row][backtrack.col].parentPosition;
         }
 
-        return sequence;
+        // Reverse the backtracked path for the solution path.
+        reverse(solution.moves.begin(), solution.moves.end());
+
+        return solution;
       }
     }
   }
 
-  // Return an empty sequence if we didn't find a solution.
-  return vector<Position>();
+  // Return an empty path if we didn't find a solution.
+  return Path();
 }
 
 Path Board::longestPath(int startId, int goalId, int exploreDepth, int sleepMs) {
@@ -271,7 +274,7 @@ Path Board::longestPath(int startId, int goalId, int exploreDepth, int sleepMs) 
   int longestPathWeight = -1;
   Path solution;
 
-  int estimateCost = dijkstra(startId, goalId).size();
+  int estimateCost = dijkstra(startId, goalId).moves.size();
 
   // If it's impossible to get from the start to the goal, return an empty solution.
   if (estimateCost == 0 && (startId != goalId)) {
@@ -314,7 +317,7 @@ Path Board::longestPath(int startId, int goalId, int exploreDepth, int sleepMs) 
         if (explorePath.newMove(explorePosition, idFromPosition(explorePosition))) {
 
           // We only want to continue exploring a path if there still exists a path to the goal.
-          estimateCost = dijkstra(idFromPosition(explorePosition), goalId, currentPath.visited).size();
+          estimateCost = dijkstra(idFromPosition(explorePosition), goalId, currentPath.visited).moves.size();
           if (estimateCost == 0 && (goalId != idFromPosition(explorePosition))) {
             continue;
           }
