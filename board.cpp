@@ -104,11 +104,11 @@ bool Board::isValidKnightMove(Position start, Position end) {
 }
 
 bool Board::isValidTeleport(Position start, Position end) {
-  vector<Position> potentialPositions = getValidMoves(start);
+  vector<Position> potentialPositions = getValidPath(start);
   return find(potentialPositions.begin(), potentialPositions.end(), end) != potentialPositions.end();
 }
 
-bool Board::isValidSequence(Moves path) {
+bool Board::isValidSequence(Path path) {
   if (path.moves.empty()) {
     return true;
   }
@@ -157,11 +157,11 @@ bool Board::isValidSequence(vector<Position> sequence) {
   return true;
 }
 
-vector<Position> Board::getValidMoves(int row, int col) {
-  return getValidMoves(board[row][col]);
+vector<Position> Board::getValidPath(int row, int col) {
+  return getValidPath(board[row][col]);
 }
 
-vector<Position> Board::getValidMoves(Position position) {
+vector<Position> Board::getValidPath(Position position) {
   vector<Position> potentialPositions;
 
   // Ensure that our initial position is valid
@@ -182,7 +182,7 @@ vector<Position> Board::getValidMoves(Position position) {
     }
   }
 
-  vector<Position> validMoves;
+  vector<Position> validPath;
   for (Position move: potentialPositions) {
     // Ensure there are no barriers blocking the move
     if (isBarrierBlocking(position, move)) {
@@ -195,15 +195,15 @@ vector<Position> Board::getValidMoves(Position position) {
     if (teleportPositionIds.find(moveId) != teleportPositionIds.end()) {
       for (int teleportPositionId : teleportPositionIds) {
         if (moveId != teleportPositionId) {
-          validMoves.push_back(positionFromId(teleportPositionId));
+          validPath.push_back(positionFromId(teleportPositionId));
         }
       }
     } else {
-      validMoves.push_back(board[move.row][move.col]);
+      validPath.push_back(board[move.row][move.col]);
     }
   }
 
-  return validMoves;
+  return validPath;
 }
 
 vector<vector<Position>> Board::getAdjacencyList() {
@@ -211,7 +211,7 @@ vector<vector<Position>> Board::getAdjacencyList() {
 
   for (int row = 0; row < board.size(); row++) {
     for (int col = 0; col < board.size(); col++) {
-      adjacencyList.push_back(getValidMoves(board[row][col]));
+      adjacencyList.push_back(getValidPath(board[row][col]));
     }
   }
 
@@ -220,13 +220,13 @@ vector<vector<Position>> Board::getAdjacencyList() {
 
 vector<Position> Board::dijkstra(int startId, int goalId, unordered_set<int> visited) {
   vector<vector<Position>> adjacencyList = getAdjacencyList();
-  vector<vector<Move>> boardMoves (board.size(), vector<Move> (board.size(), Move(POSITION_BEGIN, POSITION_BEGIN, MAX_WEIGHT)));
+  vector<vector<Move>> boardPath (board.size(), vector<Move> (board.size(), Move(POSITION_BEGIN, POSITION_BEGIN, MAX_WEIGHT)));
   vector<Move> priorityQueue;
 
   Position startPosition = positionFromId(startId);
   Move startingMove = Move(startPosition, POSITION_BEGIN, startPosition.weight);
 
-  boardMoves[startPosition.row][startPosition.col] = startingMove;
+  boardPath[startPosition.row][startPosition.col] = startingMove;
   priorityQueue.push_back(startingMove);
   push_heap(priorityQueue.begin(), priorityQueue.end());
 
@@ -246,8 +246,8 @@ vector<Position> Board::dijkstra(int startId, int goalId, unordered_set<int> vis
       Move newMove = currentMove.newMove(newPosition);
       int newPositionId = idFromPosition(newPosition);
 
-      if (newMove.totalWeight < boardMoves[newPosition.row][newPosition.col].totalWeight) {
-        boardMoves[newPosition.row][newPosition.col] = newMove;
+      if (newMove.totalWeight < boardPath[newPosition.row][newPosition.col].totalWeight) {
+        boardPath[newPosition.row][newPosition.col] = newMove;
 
         vector<Move>::iterator itr = find(priorityQueue.begin(), priorityQueue.end(), newMove);
         if (itr != priorityQueue.end()) {
@@ -266,7 +266,7 @@ vector<Position> Board::dijkstra(int startId, int goalId, unordered_set<int> vis
 
         while (backtrack != POSITION_BEGIN) {
           sequence.insert(sequence.begin(), backtrack);
-          backtrack = boardMoves[backtrack.row][backtrack.col].parentPosition;
+          backtrack = boardPath[backtrack.row][backtrack.col].parentPosition;
         }
 
         return sequence;
@@ -277,10 +277,10 @@ vector<Position> Board::dijkstra(int startId, int goalId, unordered_set<int> vis
   return vector<Position>();
 }
 
-Moves Board::longestPath(int startId, int goalId) {
+Path Board::longestPath(int startId, int goalId) {
   vector<vector<Position>> adjacencyList = getAdjacencyList();
   vector<Weight> priorityQueue;
-  Moves solution;
+  Path solution;
   int longestPathWeight = -1;
   int count = 0;
 
@@ -289,12 +289,12 @@ Moves Board::longestPath(int startId, int goalId) {
     return solution;
   }
 
-  priorityQueue.push_back(Weight(Moves(positionFromId(startId), startId), estimateCost));
+  priorityQueue.push_back(Weight(Path(positionFromId(startId), startId), estimateCost));
   push_heap(priorityQueue.begin(), priorityQueue.end());
 
   while (!priorityQueue.empty() && count < 1200) {
     count++;
-    Moves currentPath = priorityQueue.front().moves;
+    Path currentPath = priorityQueue.front().path;
 
     pop_heap(priorityQueue.begin(), priorityQueue.end());
     priorityQueue.pop_back();
@@ -320,7 +320,7 @@ Moves Board::longestPath(int startId, int goalId) {
       random_shuffle(explorePositions.begin(), explorePositions.end());
 
       for (Position explorePosition : explorePositions) {
-        Moves explorePath = currentPath;
+        Path explorePath = currentPath;
 
         if (explorePath.newMove(explorePosition, idFromPosition(explorePosition))) {
 
@@ -344,7 +344,7 @@ Moves Board::longestPath(int startId, int goalId) {
   return solution;
 }
 
-void Board::printBoard(Position startingPosition, Position endingPosition, Moves path) {
+void Board::printBoard(Position startingPosition, Position endingPosition, Path path) {
   Position currentPosition = path.moves.empty() ? POSITION_BEGIN : path.moves.back();
 
   cout << "Board[" << path.totalWeight << "]:" << endl;

@@ -12,16 +12,16 @@
 #include <cassert>
 using namespace std;
 
-struct Moves {
+struct Path {
   vector<Position> moves;
   unordered_set<int> visited;
   int totalWeight;
 
-  Moves() {
+  Path() {
     totalWeight = 0;
   }
 
-  Moves(Position position, int positionId) {
+  Path(Position position, int positionId) {
     moves.push_back(position);
     visited.insert(positionId);
     totalWeight = position.weight;
@@ -39,17 +39,17 @@ struct Moves {
     return true;
   }
 
-  friend bool operator<(Moves moves1, Moves moves2) {
-    return moves1.totalWeight < moves2.totalWeight;
+  friend bool operator<(Path path1, Path path2) {
+    return path1.totalWeight < path2.totalWeight;
   }
 };
 
 struct Weight {
-  Moves moves;
+  Path path;
   int estimatedCost;
 
-  Weight(Moves path, int cost) {
-    moves = path;
+  Weight(Path path, int cost) {
+    this->path = path;
     estimatedCost = path.totalWeight + cost;
   }
 
@@ -72,17 +72,17 @@ public:
   bool isBarrierBlocking(Position start, Position end);
   bool isValidKnightMove(Position start, Position end);
   bool isValidTeleport(Position start, Position end);
-  bool isValidSequence(Moves path);
+  bool isValidSequence(Path path);
   bool isValidSequence(vector<Position> sequence);
 
-  vector<Position> getValidMoves(int row, int col);
-  vector<Position> getValidMoves(Position position);
+  vector<Position> getValidPath(int row, int col);
+  vector<Position> getValidPath(Position position);
 
   vector<vector<Position>> getAdjacencyList();
   vector<Position> dijkstra(int startId, int goalId, unordered_set<int> visited = unordered_set<int>());
-  Moves longestPath(int startId, int goalId);
+  Path longestPath(int startId, int goalId);
 
-  void printBoard(Position startingPosition, Position endingPosition, Moves path);
+  void printBoard(Position startingPosition, Position endingPosition, Path path);
   void printBoard(Position startingPosition, Position endingPosition, Position currentPosition);
   void printBoardId();
 };
