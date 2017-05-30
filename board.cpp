@@ -141,8 +141,6 @@ bool Board::isValidSequence(vector<Position> sequence) {
     Position currentPosition = sequence[move];
     Position nextPosition = sequence[move + 1];
 
-    cout << "Checking validity of: " << currentPosition.row << ", " << currentPosition.col << endl;
-
     if (!isValidKnightMove(currentPosition, nextPosition) && !isValidTeleport(currentPosition, nextPosition)) {
       cout << "Failed validity." << endl;
       return false;
@@ -300,7 +298,6 @@ Path Board::longestPath(int startId, int goalId, int exploreDepth) {
       if (currentPath.totalWeight > longestPathWeight) {
         longestPathWeight = currentPath.totalWeight;
         solution = currentPath;
-        isValidSequence(currentPath);
         cout << "Found a solution: " << longestPathWeight << endl;
       }
     } else {
