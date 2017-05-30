@@ -15,6 +15,7 @@ class PriorityQueue {
     void pop();
     T top();
     bool empty();
+    int size();
 };
 
 #endif

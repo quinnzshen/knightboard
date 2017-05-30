@@ -268,7 +268,7 @@ vector<Position> Board::dijkstra(int startId, int goalId, unordered_set<int> vis
 
 Path Board::longestPath(int startId, int goalId, int exploreDepth) {
   vector<vector<Position>> adjacencyList = getAdjacencyList();
-  vector<Weight> priorityQueue;
+  PriorityQueue<Weight> priorityQueue;
   int longestPathWeight = -1;
   Path solution;
 
@@ -277,16 +277,13 @@ Path Board::longestPath(int startId, int goalId, int exploreDepth) {
     return solution;
   }
 
-  priorityQueue.push_back(Weight(Path(positionFromId(startId), startId), estimateCost));
-  push_heap(priorityQueue.begin(), priorityQueue.end());
+  priorityQueue.push(Weight(Path(positionFromId(startId), startId), estimateCost));
 
   while (!priorityQueue.empty() && exploreDepth > 0) {
     exploreDepth--;
 
-    Path currentPath = priorityQueue.front().path;
-
-    pop_heap(priorityQueue.begin(), priorityQueue.end());
-    priorityQueue.pop_back();
+    Path currentPath = priorityQueue.top().path;
+    priorityQueue.pop();
 
     Position currentPosition = currentPath.moves.back();
     int currentId = idFromPosition(currentPosition);
@@ -319,8 +316,7 @@ Path Board::longestPath(int startId, int goalId, int exploreDepth) {
             continue;
           }
 
-          priorityQueue.push_back(Weight(explorePath, estimateCost));
-          push_heap(priorityQueue.begin(), priorityQueue.end());
+          priorityQueue.push(Weight(explorePath, estimateCost));
         }
       }
     }

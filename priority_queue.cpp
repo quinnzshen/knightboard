@@ -1,5 +1,6 @@
 #include "priority_queue.h"
 #include "move.h"
+#include "board.h"
 using namespace std;
 
 template <class T>
@@ -37,4 +38,10 @@ bool PriorityQueue<T>::empty() {
   return vec.empty();
 }
 
+template <class T>
+int PriorityQueue<T>::size() {
+  return vec.size();
+}
+
 template class PriorityQueue<Move>;
+template class PriorityQueue<Weight>;
