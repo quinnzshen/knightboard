@@ -263,21 +263,25 @@ vector<Position> Board::dijkstra(int startId, int goalId, unordered_set<int> vis
     }
   }
 
+  // Return an empty sequence if we didn't find a solution.
   return vector<Position>();
 }
 
 Path Board::longestPath(int startId, int goalId, int exploreDepth) {
   vector<vector<Position>> adjacencyList = getAdjacencyList();
-  PriorityQueue<Weight> priorityQueue;
+  PriorityQueue<Heuristic> priorityQueue;
   int longestPathWeight = -1;
   Path solution;
 
   int estimateCost = dijkstra(startId, goalId).size();
-  if (estimateCost == 0 && (goalId != startId)) {
+
+  // If it's impossible to get from the start to the goal, return an empty solution.
+  if (estimateCost == 0 && (startId != goalId)) {
     return solution;
   }
 
-  priorityQueue.push(Weight(Path(positionFromId(startId), startId), estimateCost));
+  Path startingPath = Path(positionFromId(startId), startId);
+  priorityQueue.push(Heuristic(startingPath, estimateCost));
 
   while (!priorityQueue.empty() && exploreDepth > 0) {
     exploreDepth--;
@@ -316,7 +320,7 @@ Path Board::longestPath(int startId, int goalId, int exploreDepth) {
             continue;
           }
 
-          priorityQueue.push(Weight(explorePath, estimateCost));
+          priorityQueue.push(Heuristic(explorePath, estimateCost));
         }
       }
     }

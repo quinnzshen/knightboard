@@ -4,6 +4,7 @@
 #include "position.h"
 #include "move.h"
 #include "priority_queue.h"
+#include "path.h"
 #include <iostream>
 #include <vector>
 #include <iomanip>
@@ -12,57 +13,21 @@
 #include <cassert>
 using namespace std;
 
-struct Path {
-  vector<Position> moves;
-  unordered_set<int> visited;
-  int totalWeight;
-
-  Path() {
-    totalWeight = 0;
-  }
-
-  Path(Position position, int positionId) {
-    moves.push_back(position);
-    visited.insert(positionId);
-    totalWeight = position.weight;
-  }
-
-  bool newMove(Position position, int positionId) {
-    if (visited.find(positionId) != visited.end()) {
-      return false;
-    }
-
-    moves.push_back(position);
-    visited.insert(positionId);
-    totalWeight += position.weight;
-
-    return true;
-  }
-
-  friend bool operator==(Path path1, Path path2) {
-    return path1.moves.back() == path2.moves.back() && path1.moves.front() == path2.moves.front();
-  }
-
-  friend bool operator<(Path path1, Path path2) {
-    return path1.totalWeight < path2.totalWeight;
-  }
-};
-
-struct Weight {
+struct Heuristic {
   Path path;
   int estimatedCost;
 
-  Weight(Path path, int cost) {
+  Heuristic(Path path, int estimatedCost) {
     this->path = path;
-    estimatedCost = path.totalWeight + cost;
+    this->estimatedCost = path.totalWeight + estimatedCost;
   }
 
-  friend bool operator==(Weight weight1, Weight weight2) {
-    return weight1.path == weight2.path;
+  friend bool operator==(Heuristic heuristic1, Heuristic heuristic2) {
+    return heuristic1.path == heuristic2.path;
   }
 
-  friend bool operator<(Weight weight1, Weight weight2) {
-    return weight1.estimatedCost < weight2.estimatedCost;
+  friend bool operator<(Heuristic heuristic1, Heuristic heuristic2) {
+    return heuristic1.estimatedCost < heuristic2.estimatedCost;
   }
 };
 

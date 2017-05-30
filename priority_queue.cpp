@@ -44,4 +44,4 @@ int PriorityQueue<T>::size() {
 }
 
 template class PriorityQueue<Move>;
-template class PriorityQueue<Weight>;
+template class PriorityQueue<Heuristic>;
