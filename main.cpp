@@ -2,6 +2,7 @@
 using namespace std;
 
 const int DEFAULT_EXPLORE_DEPTH = 1200;
+const int DEFAULT_SLEEP_MS = 100;
 
 int main() {
   // Level 3
@@ -19,7 +20,7 @@ int main() {
   cin.ignore();
 
   // Level 5
-  board.isValidSequence(board.longestPath(13, 856, DEFAULT_EXPLORE_DEPTH));
+  board.isValidSequence(board.longestPath(13, 856, DEFAULT_EXPLORE_DEPTH, DEFAULT_SLEEP_MS));
 
   cout << "Completed level 5." << endl;
 }

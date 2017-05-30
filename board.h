@@ -36,7 +36,7 @@ public:
 
   vector<vector<Position>> getAdjacencyList();
   vector<Position> dijkstra(int startId, int goalId, unordered_set<int> visited = unordered_set<int>());
-  Path longestPath(int startId, int goalId, int exploreDepth);
+  Path longestPath(int startId, int goalId, int exploreDepth, int sleepMs);
 
   void printBoard(Position startingPosition, Position endingPosition, Path path);
   void printBoard(Position startingPosition, Position endingPosition, Position currentPosition);

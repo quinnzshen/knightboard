@@ -265,7 +265,7 @@ vector<Position> Board::dijkstra(int startId, int goalId, unordered_set<int> vis
   return vector<Position>();
 }
 
-Path Board::longestPath(int startId, int goalId, int exploreDepth) {
+Path Board::longestPath(int startId, int goalId, int exploreDepth, int sleepMs) {
   vector<vector<Position>> adjacencyList = getAdjacencyList();
   PriorityQueue<Heuristic> priorityQueue;
   int longestPathWeight = -1;
@@ -290,9 +290,11 @@ Path Board::longestPath(int startId, int goalId, int exploreDepth) {
     Position currentPosition = currentPath.moves.back();
     int currentId = idFromPosition(currentPosition);
 
-    cout << "QUEUE SIZE: " << priorityQueue.size() << endl;
-    printBoard(positionFromId(startId), positionFromId(goalId), currentPath);
-    this_thread::sleep_for (chrono::milliseconds(100));
+    if (sleepMs > 0) {
+      cout << "QUEUE SIZE: " << priorityQueue.size() << endl;
+      printBoard(positionFromId(startId), positionFromId(goalId), currentPath);
+      this_thread::sleep_for (chrono::milliseconds(sleepMs));
+    }
 
     if (currentPosition == positionFromId(goalId)) {
       if (currentPath.totalWeight > longestPathWeight) {
