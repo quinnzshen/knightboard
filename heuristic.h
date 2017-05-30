@@ -4,6 +4,7 @@
 #include "path.h"
 using namespace std;
 
+/* A Heuristic gives us an estimate value for a given path */
 struct Heuristic {
   Path path;
   int estimatedCost;

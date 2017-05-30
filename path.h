@@ -6,6 +6,7 @@
 #include <unordered_set>
 using namespace std;
 
+/* A Path allows us to keep track of a move sequence, visited ids, and the total weight */
 struct Path {
   vector<Position> moves;
   unordered_set<int> visited;

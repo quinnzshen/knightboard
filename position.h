@@ -7,7 +7,7 @@ using namespace std;
 enum Type { WATER, ROCK, BARRIER, TELEPORT, LAVA, NORMAL };
 const int MAX_WEIGHT = numeric_limits<int>::max();
 
-/* Defines a Position */
+/* A Position is defined by a row, column, and weight */
 struct Position {
   int row, col, weight;
   Type type;

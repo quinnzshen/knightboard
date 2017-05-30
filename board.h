@@ -14,6 +14,7 @@
 #include <cassert>
 using namespace std;
 
+/* A Board is created by reading in a .txt file */
 class Board {
   vector<vector<Position>> board;
   unordered_set<int> teleportPositionIds;

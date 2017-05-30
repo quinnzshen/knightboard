@@ -4,6 +4,7 @@ using namespace std;
 const int DEFAULT_EXPLORE_DEPTH = 1200;
 const int DEFAULT_SLEEP_MS = 100;
 
+/* main.cpp allows us to run the knightboard challenge */
 int main() {
   // Level 3
   Board board = Board("boards/lvl3Board.txt");

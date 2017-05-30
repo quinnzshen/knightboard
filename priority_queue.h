@@ -4,6 +4,7 @@
 #include <vector>
 using namespace std;
 
+/* Generic Implementation of a PriorityQueue that has an update function for Dijkstra */
 template <class T>
 class PriorityQueue {
   private:

@@ -5,6 +5,7 @@
 
 const Position POSITION_BEGIN = Position(-1, -1, 0);
 
+/* A Move is a lightweight way of keeping track of position + parent position for backtracking */
 struct Move {
   Position position = POSITION_BEGIN;
   Position parentPosition = POSITION_BEGIN;

@@ -1,6 +1,7 @@
 #include "board.h"
 using namespace std;
 
+/* test.cpp is used for unit-testing sections of code */
 int main() {
   Board board = Board("boards/lvl3Board.txt");
 
