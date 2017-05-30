@@ -28,11 +28,6 @@ struct Moves {
   }
 
   bool newMove(Position position, int positionId) {
-    // for (auto elem : visited) {
-    //   cout << elem << " ";
-    // }
-    // cout << "!" << endl;
-
     if (visited.find(positionId) != visited.end()) {
       return false;
     }
