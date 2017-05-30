@@ -10,7 +10,7 @@ int main() {
 
   // Level 4
   Board board = Board("boards/board.txt");
-  // board.isValidSequence(board.dijkstra(13, 856));
+  board.isValidSequence(board.dijkstra(13, 856));
 
   // Level 5
   // board = Board("boards/4x4Board.txt");

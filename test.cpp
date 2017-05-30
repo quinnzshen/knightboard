@@ -32,8 +32,8 @@ int main() {
   validKnightMove = board.isValidKnightMove(Position(0, 0), Position(-1, -2));
   assert(!validKnightMove);
 
-  // Testing getValidMoves
-  vector<Position> validMoves = board.getValidMoves(Position(0, 0));
+  // Testing getValidPath
+  vector<Position> validMoves = board.getValidPath(Position(0, 0));
   for (Position move : validMoves) {
     assert((move.row == 2 && move.col == 1) || (move.row == 1 && move.col == 2));
   }
@@ -58,7 +58,7 @@ int main() {
 
   // Level 4 Unit Tests
   board = Board("boards/lvl4BoardTest.txt");
-  validMoves = board.getValidMoves(2, 2);
+  validMoves = board.getValidPath(2, 2);
 
   assert(validMoves.size() == 5);
   // Valid Knight Jumps

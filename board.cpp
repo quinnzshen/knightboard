@@ -220,20 +220,17 @@ vector<vector<Position>> Board::getAdjacencyList() {
 vector<Position> Board::dijkstra(int startId, int goalId, unordered_set<int> visited) {
   vector<vector<Position>> adjacencyList = getAdjacencyList();
   vector<vector<Move>> boardPath (board.size(), vector<Move> (board.size(), Move(POSITION_BEGIN, POSITION_BEGIN, MAX_WEIGHT)));
-  vector<Move> priorityQueue;
+  PriorityQueue<Move> priorityQueue;
 
   Position startPosition = positionFromId(startId);
   Move startingMove = Move(startPosition, POSITION_BEGIN, startPosition.weight);
 
   boardPath[startPosition.row][startPosition.col] = startingMove;
-  priorityQueue.push_back(startingMove);
-  push_heap(priorityQueue.begin(), priorityQueue.end());
+  priorityQueue.push(startingMove);
 
   while (!priorityQueue.empty()) {
-    Move currentMove = priorityQueue.front();
-
-    pop_heap(priorityQueue.begin(), priorityQueue.end());
-    priorityQueue.pop_back();
+    Move currentMove = priorityQueue.top();
+    priorityQueue.pop();
 
     int currentMoveId = idFromPosition(currentMove.position);
 
@@ -248,14 +245,7 @@ vector<Position> Board::dijkstra(int startId, int goalId, unordered_set<int> vis
       if (newMove.totalWeight < boardPath[newPosition.row][newPosition.col].totalWeight) {
         boardPath[newPosition.row][newPosition.col] = newMove;
 
-        vector<Move>::iterator itr = find(priorityQueue.begin(), priorityQueue.end(), newMove);
-        if (itr != priorityQueue.end()) {
-          priorityQueue.erase(itr);
-          make_heap(priorityQueue.begin(), priorityQueue.end());
-        }
-
-        priorityQueue.push_back(newMove);
-        push_heap(priorityQueue.begin(), priorityQueue.end());
+        priorityQueue.update(newMove);
       }
 
       if (newPositionId == goalId) {

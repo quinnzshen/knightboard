@@ -3,6 +3,7 @@
 
 #include "position.h"
 #include "move.h"
+#include "priority_queue.h"
 #include <iostream>
 #include <vector>
 #include <iomanip>
