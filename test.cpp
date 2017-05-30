@@ -82,10 +82,10 @@ int main() {
   assert(adjacencyList[2][1] == Position(1, 0));
   assert(adjacencyList[2][1].weight == 1);
   assert(adjacencyList[3].size() == 2);
-  assert(adjacencyList[3][0] == Position(2, 2));
-  assert(adjacencyList[3][0].weight == 2);
-  assert(adjacencyList[3][1] == Position(1, 1));
-  assert(adjacencyList[3][1].weight == 1);
+  assert(adjacencyList[3][0] == Position(1, 1));
+  assert(adjacencyList[3][0].weight == 1);
+  assert(adjacencyList[3][1] == Position(2, 2));
+  assert(adjacencyList[3][1].weight == 2);
   assert(adjacencyList[4].size() == 0);
   assert(adjacencyList[5].size() == 0);
   assert(adjacencyList[6].size() == 0);
