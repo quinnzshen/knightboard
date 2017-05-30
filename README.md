@@ -62,3 +62,8 @@ priority_within_queue = currentPath.totalWeight + estimatedCostToGoal;
 ```
 
 By creating this heuristic, we were now prioritizing the exploration of paths that would also take us further away from the goal id. This encouraged the Best-First-Search (A\*) to explore as far as possible (exploring all corners of the board) before reaching the goal. The best way to estimate my cost to goal was to utilize my Djikstra's algorithm and determine how many moves (vs. weight) it would take me reach the goal in the current state. 
+
+# Additional Notes:
+I allow multiple teleporters in my implementation; the visited position is the position you teleport to (not the space used to teleport). For example, if there are three Teleporters A, B, C; you can use A to teleport to B, then A to teleport to C, and either B or C to teleport back to A.
+
+When printing a path, I opt'ed to show teleportation tiles even after they've been visited (for the reasons mentioned above). This way you can still visually see where a teleport tile is.
