@@ -4,7 +4,6 @@
 #include "position.h"
 #include "move.h"
 #include <iostream>
-#include <algorithm>
 #include <vector>
 #include <iomanip>
 #include <fstream>
@@ -80,7 +79,7 @@ public:
 
   vector<vector<Position>> getAdjacencyList();
   vector<Position> dijkstra(int startId, int goalId, unordered_set<int> visited = unordered_set<int>());
-  Path longestPath(int startId, int goalId);
+  Path longestPath(int startId, int goalId, int exploreDepth);
 
   void printBoard(Position startingPosition, Position endingPosition, Path path);
   void printBoard(Position startingPosition, Position endingPosition, Position currentPosition);

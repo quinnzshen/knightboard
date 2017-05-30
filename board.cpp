@@ -1,5 +1,4 @@
 #include "board.h"
-#include <stack>
 #include <thread>
 #include <chrono>
 using namespace std;
@@ -277,12 +276,11 @@ vector<Position> Board::dijkstra(int startId, int goalId, unordered_set<int> vis
   return vector<Position>();
 }
 
-Path Board::longestPath(int startId, int goalId) {
+Path Board::longestPath(int startId, int goalId, int exploreDepth) {
   vector<vector<Position>> adjacencyList = getAdjacencyList();
   vector<Weight> priorityQueue;
-  Path solution;
   int longestPathWeight = -1;
-  int count = 0;
+  Path solution;
 
   int estimateCost = dijkstra(startId, goalId).size();
   if (estimateCost == 0 && (goalId != startId)) {
@@ -292,8 +290,9 @@ Path Board::longestPath(int startId, int goalId) {
   priorityQueue.push_back(Weight(Path(positionFromId(startId), startId), estimateCost));
   push_heap(priorityQueue.begin(), priorityQueue.end());
 
-  while (!priorityQueue.empty() && count < 1200) {
-    count++;
+  while (!priorityQueue.empty() && exploreDepth > 0) {
+    exploreDepth--;
+
     Path currentPath = priorityQueue.front().path;
 
     pop_heap(priorityQueue.begin(), priorityQueue.end());
