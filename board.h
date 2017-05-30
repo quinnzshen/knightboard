@@ -5,6 +5,7 @@
 #include "move.h"
 #include "priority_queue.h"
 #include "path.h"
+#include "heuristic.h"
 #include <iostream>
 #include <vector>
 #include <iomanip>
@@ -12,24 +13,6 @@
 #include <unordered_set>
 #include <cassert>
 using namespace std;
-
-struct Heuristic {
-  Path path;
-  int estimatedCost;
-
-  Heuristic(Path path, int estimatedCost) {
-    this->path = path;
-    this->estimatedCost = path.totalWeight + estimatedCost;
-  }
-
-  friend bool operator==(Heuristic heuristic1, Heuristic heuristic2) {
-    return heuristic1.path == heuristic2.path;
-  }
-
-  friend bool operator<(Heuristic heuristic1, Heuristic heuristic2) {
-    return heuristic1.estimatedCost < heuristic2.estimatedCost;
-  }
-};
 
 class Board {
   vector<vector<Position>> board;
