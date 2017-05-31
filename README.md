@@ -71,6 +71,8 @@ priority_within_queue = currentPath.totalWeight + estimatedCostToGoal;
 
 By creating this heuristic, we were now prioritizing the exploration of paths that would also take us further away from the goal id. This encouraged the Best-First-Search (A\*) to explore as far as possible (exploring all corners of the board) before reaching the goal. The best way to estimate my cost to goal was to utilize my Djikstra's algorithm and determine how many moves (vs. weight) it would take me reach the goal in the current state. 
 
+I determined that it was a worthwhile trade-off to explore in this way to estimate a "longest" path pretty efficiently vs. finding the exact "longest" path. I was able to find a reasonable solution for everything I tried within 1200 iterations in < 30 seconds. Improving the heuristic and underlying data structures (e.g. priority queue) should improve the solution and run-time.
+
 # Additional Notes:
 I allow multiple teleporters in my implementation; the visited position is the position you teleport to (not the space used to teleport). For example, if there are three Teleporters A, B, C; you can use A to teleport to B, then A to teleport to C, and either B or C to teleport back to A.
 
