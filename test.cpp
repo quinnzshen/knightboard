@@ -96,4 +96,12 @@ int main() {
   assert(adjacencyList[8].size() == 1);
   assert(adjacencyList[8][0] == Position(0, 1));
   assert(adjacencyList[8][0].weight == 1);
+
+  // Testing dijkstra algorithm
+  board = Board("boards/boardTeleTest.txt");
+  Path solution = board.dijkstra(0, 95);
+  assert(solution.moves.size() == 3);
+  assert(solution.moves[0] == Position(0, 0));
+  assert(solution.moves[1] == Position(8, 7));
+  assert(solution.moves[2] == Position(9, 5));
 }
