@@ -51,6 +51,10 @@ int Board::idFromPosition(Position position) {
   return position.row * board.size() + position.col;
 }
 
+bool Board::isValidId(int id) {
+  return (id >= 0) && (id < board.size() * board.size());
+}
+
 bool Board::isValidPosition(int row, int col) {
   if ((row >= 0) && (row < board.size()) && (col >= 0) && (col < board.size())) {
     return (board[row][col].type != ROCK) && (board[row][col].type != BARRIER);
@@ -142,7 +146,6 @@ bool Board::isValidSequence(vector<Position> sequence) {
     Position nextPosition = sequence[move + 1];
 
     if (!isValidKnightMove(currentPosition, nextPosition) && !isValidTeleport(currentPosition, nextPosition)) {
-      cout << "Failed validity." << endl;
       return false;
     }
   }
@@ -216,6 +219,12 @@ vector<vector<Position>> Board::getAdjacencyList() {
 }
 
 Path Board::dijkstra(int startId, int goalId, unordered_set<int> visited) {
+  // Ensure startId and goalId are both valid id's on the given board
+  if (!isValidId(startId) || !isValidId(goalId)) {
+    cout << "StartId or GoalId is not valid." << endl;
+    return Path();
+  }
+
   vector<vector<Position>> adjacencyList = getAdjacencyList();
   vector<vector<Move>> boardPath (board.size(), vector<Move> (board.size(), Move(POSITION_BEGIN, POSITION_BEGIN, MAX_WEIGHT)));
   PriorityQueue<Move> priorityQueue;
@@ -269,6 +278,12 @@ Path Board::dijkstra(int startId, int goalId, unordered_set<int> visited) {
 }
 
 Path Board::longestPath(int startId, int goalId, int exploreDepth, int sleepMs) {
+  // Ensure startId and goalId are both valid id's on the given board
+  if (!isValidId(startId) || !isValidId(goalId)) {
+    cout << "StartId or GoalId is not valid." << endl;
+    return Path();
+  }
+
   vector<vector<Position>> adjacencyList = getAdjacencyList();
   PriorityQueue<Heuristic> priorityQueue;
   int longestPathWeight = -1;

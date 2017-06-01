@@ -25,6 +25,7 @@ public:
   Position positionFromId(int id);
   int idFromPosition(Position position);
 
+  bool isValidId(int id);
   bool isValidPosition(int row, int col);
   bool isBarrierBlocking(Position start, Position end);
   bool isValidKnightMove(Position start, Position end);

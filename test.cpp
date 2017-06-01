@@ -13,6 +13,12 @@ int main() {
   int id = board.idFromPosition(Position(1, 1));
   assert(id == 9);
 
+  // Testing isValidId
+  assert(board.isValidId(0));
+  assert(board.isValidId(63));
+  assert(!board.isValidId(-1));
+  assert(!board.isValidId(64));
+
   // Testing isValidPosition
   bool validPosition = board.isValidPosition(1, 1);
   assert(validPosition);
@@ -104,4 +110,6 @@ int main() {
   assert(solution.moves[0] == Position(0, 0));
   assert(solution.moves[1] == Position(8, 7));
   assert(solution.moves[2] == Position(9, 5));
+
+  cout << "Passed all unit-tests" << endl;
 }
