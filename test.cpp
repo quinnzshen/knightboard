@@ -19,6 +19,16 @@ int main() {
   assert(!board.isValidId(-1));
   assert(!board.isValidId(64));
 
+  board = Board("boards/lvl4BoardTest.txt");
+  
+  assert(board.isValidId(0));
+  assert(!board.isValidId(2));
+  assert(!board.isValidId(3));
+  assert(board.isValidId(5));
+  assert(board.isValidId(9));
+
+  board = Board("boards/lvl3Board.txt");
+
   // Testing isValidPosition
   bool validPosition = board.isValidPosition(1, 1);
   assert(validPosition);
